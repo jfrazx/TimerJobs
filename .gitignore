@@ -1,0 +1,11 @@
+
+.DS_Store
+
+*.js
+*.log
+*.map
+
+typings/
+node_modules/
+
+!test/**

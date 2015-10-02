@@ -1,0 +1,35 @@
+{
+  "name": "timerjobs",
+  "version": "1.0.0",
+  "description": "TimerJobs is a simple way to create recurring tasks that can respond to events.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "eventemitter2": "^0.4.14"
+  },
+  "devDependencies": {
+    "chai": "^3.3.0",
+    "mocha": "^2.3.3"
+  },
+  "scripts": {
+    "test": "mocha -R spec ./test/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jfrazx/TimerJobs.git"
+  },
+  "keywords": [
+    "timer",
+    "task",
+    "job",
+    "recurring"
+  ],
+  "author": "jfrazx",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jfrazx/TimerJobs/issues"
+  },
+  "homepage": "https://github.com/jfrazx/TimerJobs#readme"
+}
