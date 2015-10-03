@@ -40,6 +40,8 @@ export class TimerJobs implements ITimerJobs {
   private LEVEL: { [ level: string ]:  string };
   private start_wait: number = 0;
 
+  public static timers: TimerJobs[] = [];
+
 
   constructor( options: ITimerJobsOptions, callback: ( done: Function ) => void );
   constructor( callback: ( done: Function ) => void );
@@ -140,6 +142,8 @@ export class TimerJobs implements ITimerJobs {
 
     if ( this.autoStart )
       this.start();
+
+    TimerJobs.timers.push( this );
   }
 
   /**
@@ -215,6 +219,45 @@ export class TimerJobs implements ITimerJobs {
       throw new Error( 'TimerJobs Error: countdown must be an integer value' );
 
     this.countdown  = this._countdown = value;
+  }
+
+  /**
+  * Find Timers based on property and value
+  * @param <string> property: The property to match
+  * @param <string> match: What the property value should match
+  * @return <TimerJobs[]>
+  */
+  public static findTimers( property: string, match: string ): TimerJobs[] {
+    let timers: TimerJobs[] = [];
+
+    this.timers.forEach( function( timer ) {
+      if ( timer[ property ] === match )
+        timers.push( timer );
+    });
+
+    return timers;
+  }
+
+  /**
+  * Remove Timers from timers array
+  * @param <TimerJobs> timers: The timer(s) to remove
+  * @param <boolean> stop: Stop the timer(s) being removed
+  * @return <void>
+  */
+  public static removeTimers( timers: TimerJobs, stop: boolean ): void;
+  public static removeTimers( timers: TimerJobs[], stop: boolean ): void;
+  public static removeTimers( timers: any, stop: boolean = true ): void {
+    if ( !Array.isArray( timers ) )
+      timers = [ timers ];
+
+    timers.forEach( ( timer: TimerJobs ) => {
+      let index = TimerJobs.timers.indexOf( timer );
+
+      if ( index >= 0 ) {
+        TimerJobs.timers.splice( index, 1 );
+        stop && timer.stop();
+      }
+    });
   }
 
   /**

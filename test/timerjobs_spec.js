@@ -1,8 +1,9 @@
 'use strict';
 
-var TimerJob      = require('../index'),
+var TimerJob      = require( '../index' ),
+    TimerJobs     = require( '../index' ),
     EventEmitter2 = require( 'eventemitter2' ).EventEmitter2,
-    chai          = require('chai'),
+    chai          = require( 'chai' ),
     expect        = chai.expect;
 
 describe( 'TimerJobs', function() {
@@ -56,11 +57,11 @@ describe( 'TimerJobs', function() {
         countdown: 3,
         reference: 'noDefaults',
         namespace: 'mynamespace',
-        stopOn: 'stopEvent',
+        stopOn: 'stoppingEvent',
         stopCallback: console.log,
         startOn: 'startEvent',
         startCallback: console.log,
-        restartOn: 'restartEvent',
+        restartOn: 'restartsEvent',
         restartCallback: console.log,
         delimiter: '##',
         emitter: emitter,
@@ -80,9 +81,9 @@ describe( 'TimerJobs', function() {
       expect( noDefaults.countdown ).to.equal( 2 ); // it will already execute once
       expect( noDefaults.reference ).to.equal( 'noDefaults' );
       expect( noDefaults.namespace ).to.equal( 'mynamespace' );
-      expect( noDefaults.stopOn ).to.equal( 'stopEvent' );
+      expect( noDefaults.stopOn ).to.equal( 'stoppingEvent' );
       expect( noDefaults.startOn ).to.equal( 'startEvent' );
-      expect( noDefaults.restartOn ).to.equal( 'restartEvent' );
+      expect( noDefaults.restartOn ).to.equal( 'restartsEvent' );
       expect( noDefaults.stopCallback ).to.be.a( 'function' );
       expect( noDefaults.startCallback ).to.be.a( 'function' );
       expect( noDefaults.restartCallback ).to.be.a( 'function' );
@@ -471,6 +472,59 @@ describe( 'TimerJobs', function() {
 
     it( 'should restart when an event occurs', function( done ) {
       eventsTimer.emitter.emit( 'restartEvent', eventsTimer, eventsCompleted, done );
+    });
+  });
+
+  describe( 'static functionality', function() {
+    it( 'should have an array of added Timers', function() {
+      expect( TimerJobs.timers ).to.be.an( 'array' );
+      expect( TimerJobs.timers ).to.have.length( 18 );
+    });
+
+    it( 'should find Timers by reference', function() {
+      let timers = TimerJobs.findTimers( 'reference', 'timer' );
+      expect( timers ).to.be.an( 'array' );
+      expect( timers ).to.have.length( 16 );
+    });
+
+    it( 'should find Timers by namespace', function() {
+      let timers = TimerJobs.findTimers( 'namespace', '' );
+      expect( timers ).to.be.an( 'array' );
+      expect( timers ).to.have.length( 15 );
+    });
+
+    it( 'should find Timers by other properties', function() {
+      let level    = TimerJobs.findTimers( 'emitLevel', 1 );
+      let start    = TimerJobs.findTimers( 'startOn', 'startEvent' );
+      let stop     = TimerJobs.findTimers( 'stopOn', 'stoppingEvent' );
+      let restart  = TimerJobs.findTimers( 'restartOn', 'restartEvent' );
+      let infinite = TimerJobs.findTimers( 'infinite', false );
+
+      expect( level ).to.have.length( 13 );
+      expect( start ).to.have.length( 2 );
+      expect( stop ).to.have.length( 1 );
+      expect( restart ).to.have.length( 1 );
+      expect( infinite ).to.have.length( 6 );
+    });
+
+    it( 'should remove a single Timer', function() {
+      let timer = TimerJobs.findTimers( 'reference', 'noDefaults' );
+
+      expect( timer ).to.have.length( 1 );
+
+      TimerJobs.removeTimers( timer[ 0 ] );
+
+      let empty = TimerJobs.findTimers( 'reference', 'noDefaults' );
+
+      expect( empty ).to.have.length( 0 );
+    });
+
+    it( 'should remove multiple Timers', function() {
+      expect( TimerJobs.timers ).to.have.length( 17 );
+
+      TimerJobs.removeTimers( TimerJobs.findTimers( 'reference', 'timer' ) );
+
+      expect( TimerJobs.timers ).to.have.length( 1 );
     });
   });
 });
