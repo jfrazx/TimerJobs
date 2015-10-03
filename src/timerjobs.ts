@@ -7,7 +7,7 @@ export class TimerJobs implements ITimerJobs {
   public blocking: boolean;
   public busy: boolean;
   public callback: Function;
-  public countdown: number;
+  public countdown: number; // public face of _countdown
   public delimiter: string;
   public emitter: any;
   public emitLevel: number;
@@ -36,7 +36,8 @@ export class TimerJobs implements ITimerJobs {
 
   public timer: number; // NodeJS.Timer id
 
-  private _countdown: number;
+  private _countdown: number; // manipulate internally
+  private __countdown: number; // track original value
   private LEVEL: { [ level: string ]:  string };
   private start_wait: number = 0;
 
@@ -136,7 +137,7 @@ export class TimerJobs implements ITimerJobs {
     };
 
     // keep track of original so we can reassign if the timer gets restarted
-    this._countdown = this.countdown;
+    // this._countdown = this.countdown;
 
     this.setupListeners();
 
@@ -155,7 +156,7 @@ export class TimerJobs implements ITimerJobs {
       this.start_wait = Date.now();
 
       if ( this.countdown < 1 )
-        this.countdown = this._countdown;
+        this.countdown = this.__countdown;
 
       this.timer = setInterval( this.go.bind( this ), this.interval );
 
@@ -210,24 +211,12 @@ export class TimerJobs implements ITimerJobs {
   }
 
   /**
-  * Reassign the countdown value, also reassigns the private variable to reset when restarted
-  * @param <number> value: The numeric value to assign to countdown
-  * @return <void>
-  */
-  public setCountdown( value: number ): void {
-    if ( !this.isInteger( value ) )
-      throw new Error( 'TimerJobs Error: countdown must be an integer value' );
-
-    this.countdown  = this._countdown = value;
-  }
-
-  /**
   * Find Timers based on property and value
   * @param <string> property: The property to match
   * @param <string> match: What the property value should match
   * @return <TimerJobs[]>
   */
-  public static findTimers( property: string, match: string ): TimerJobs[] {
+  public static findTimers( property: string, match: any ): TimerJobs[] {
     let timers: TimerJobs[] = [];
 
     this.timers.forEach( function( timer ) {
@@ -314,7 +303,7 @@ export class TimerJobs implements ITimerJobs {
     }
 
     if ( !this.infinite ) {
-      if ( --this.countdown < 1 ) {
+      if ( --this._countdown < 1 ) {
         if ( this.emitLevel )
           this.emitter.emit( 'jobComplete' + this.LEVEL[ this.emitLevel ] );
 
@@ -390,6 +379,21 @@ export class TimerJobs implements ITimerJobs {
   }
 }
 
+Object.defineProperty( TimerJobs.prototype, 'countdown', {
+  get: function(): number {
+    return this._countdown;
+  },
+  set: function( value: number ): void {
+    if ( !this.isInteger( value ) )
+      throw new Error( 'TimerJobs Error: countdown must be an integer value' );
+
+    if ( value < 1 )
+      value = 1;
+
+    this.__countdown = this._countdown = value;
+  }
+});
+
 export interface ITimerJobs extends ITimerJobsOptions {
   /**
   * The number of times the timer has executed
@@ -407,7 +411,6 @@ export interface ITimerJobs extends ITimerJobsOptions {
   * The timer to which all this is possible
   */
   timer: number;
-  setCountdown( value: number ): void;
   start(): void;
   stop(): void;
   started(): boolean;

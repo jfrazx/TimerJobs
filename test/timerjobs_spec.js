@@ -135,14 +135,31 @@ describe( 'TimerJobs', function() {
       }, 400 );
     });
 
-    it( 'should throw an error when passing a non-integer value', function() {
+    it( 'should throw an error when assigning a non-integer value', function() {
       var passError = new TimerJob( function( done ) {
           done();
       });
 
       expect( function() {
-        passError.setCountdown( 'this will cause an error' );
+        passError.countdown = 'this will cause an error';
       }).to.throw( 'TimerJobs Error: countdown must be an integer value' );
+    });
+
+    it( 'should assign 1 if an integer less than such is passed', function() {
+      var lessThan = new TimerJob( {
+        infinite: false,
+        countdown: 30,
+        reference: 'lessThan',
+        namespace: 'testing'
+      }, function( done ) {
+        done();
+      });
+
+      expect( lessThan.countdown ).to.equal( 30 );
+
+      lessThan.countdown = -20;
+
+      expect( lessThan.countdown ).to.equal( 1 );
     });
 
     it( 'should throw an error if no callback is defined', function() {
@@ -216,8 +233,8 @@ describe( 'TimerJobs', function() {
           changeLater.interval = 200;
           changeLater.start();
 
-          // since we did not set an initial value it will revert to 1
-          expect( changeLater.countdown ).to.equal( 1 );
+          // defineProperty fixes this previous shortcoming
+          expect( changeLater.countdown ).to.equal( 2 );
 
           setTimeout( function(){
             expect( changeLaterCompleted ).to.equal( 5 );
@@ -478,7 +495,7 @@ describe( 'TimerJobs', function() {
   describe( 'static functionality', function() {
     it( 'should have an array of added Timers', function() {
       expect( TimerJobs.timers ).to.be.an( 'array' );
-      expect( TimerJobs.timers ).to.have.length( 18 );
+      expect( TimerJobs.timers ).to.have.length( 19 );
     });
 
     it( 'should find Timers by reference', function() {
@@ -500,11 +517,11 @@ describe( 'TimerJobs', function() {
       let restart  = TimerJobs.findTimers( 'restartOn', 'restartEvent' );
       let infinite = TimerJobs.findTimers( 'infinite', false );
 
-      expect( level ).to.have.length( 13 );
+      expect( level ).to.have.length( 14 );
       expect( start ).to.have.length( 2 );
       expect( stop ).to.have.length( 1 );
       expect( restart ).to.have.length( 1 );
-      expect( infinite ).to.have.length( 6 );
+      expect( infinite ).to.have.length( 7 );
     });
 
     it( 'should remove a single Timer', function() {
@@ -520,11 +537,11 @@ describe( 'TimerJobs', function() {
     });
 
     it( 'should remove multiple Timers', function() {
-      expect( TimerJobs.timers ).to.have.length( 17 );
+      expect( TimerJobs.timers ).to.have.length( 18 );
 
       TimerJobs.removeTimers( TimerJobs.findTimers( 'reference', 'timer' ) );
 
-      expect( TimerJobs.timers ).to.have.length( 1 );
+      expect( TimerJobs.timers ).to.have.length( 2 );
     });
   });
 });

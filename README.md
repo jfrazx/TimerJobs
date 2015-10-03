@@ -185,9 +185,6 @@ Returns `true` if the Timer is started
 `timer.stopped(): boolean`    
 Returns `true` if the Timer is stopped   
 
-`timer.setCountdown( value: number ): void`    
-Set a new value for `countdown`    
-
 `timer.waitTimer(): number`    
 Returns the time in milliseconds until the next job execution  
 
