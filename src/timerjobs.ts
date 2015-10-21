@@ -40,6 +40,7 @@ export class TimerJobs implements ITimerJobs {
   private __countdown: number; // track original value
   private LEVEL: { [ level: string ]:  string };
   private start_wait: number = 0;
+  private hasStarted: boolean = false;
 
   public static timers: TimerJobs[] = [];
 
@@ -155,6 +156,8 @@ export class TimerJobs implements ITimerJobs {
     if ( !this.timer ) {
       this.start_wait = Date.now();
 
+      this.hasStarted = true;
+
       if ( this.countdown < 1 )
         this.countdown = this.__countdown;
 
@@ -196,6 +199,23 @@ export class TimerJobs implements ITimerJobs {
 
       this.timer = null;
       this.start_wait = 0;
+    }
+  }
+
+  /**
+  * Restart the timer, only if it has previous run
+  * @param <number> interval: The new optional interval to assign
+  * @return <void>
+  */
+  public restart( interval: number = this.interval ): void {
+    if ( !this.isInteger( interval ) || interval < 1 )
+      interval = this.interval;
+
+    this.interval = interval;
+
+    if ( this.hasStarted ) {
+      this.stop();
+      this.start();
     }
   }
 
@@ -356,8 +376,8 @@ export class TimerJobs implements ITimerJobs {
     */
     if ( this.restartOn ) {
       this.emitter.on( this.restartOn, function() {
-        if ( self.stopped() ) {
-          self.start();
+        if ( self.hasStarted ) {
+          self.restart();
 
           if ( self.restartCallback )
             self.restartCallback.apply( null, Array.prototype.slice.call( arguments ) );
@@ -411,6 +431,8 @@ export interface ITimerJobs extends ITimerJobsOptions {
   * The timer to which all this is possible
   */
   timer: number;
+
+  restart( interval?: number ): void;
   start(): void;
   stop(): void;
   started(): boolean;

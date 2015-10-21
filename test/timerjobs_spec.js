@@ -313,6 +313,43 @@ describe( 'TimerJobs', function() {
         done();
       }, 800);
     });
+
+    it( 'should restart the timer', function( done ) {
+      var restartComplete = 0;
+      var restart = new TimerJob({
+        interval: 100,
+        reference: 'restarter',
+      }, function( done ) {
+        restartComplete++;
+        done();
+      });
+
+      restart.restart();
+
+      expect( restart.stopped() ).to.be.true;
+      expect( restart.hasStarted ).to.be.false;
+      expect( restart.interval ).to.equal( 100 );
+
+      restart.start();
+
+      setTimeout( function() {
+        expect( restartComplete ).to.equal( 2 );
+        expect( restart.hasStarted ).to.be.true;
+
+        restart.restart( 150 );
+
+        setTimeout( function() {
+          expect( restart.started() ).to.be.true;
+          expect( restart.interval ).to.equal( 150 );
+          expect( restartComplete ).to.equal( 4 );
+          restart.stop();
+
+          done();
+        }, 310);
+      }, 300);
+
+
+    });
   });
 
   describe( 'emit events', function() {
@@ -495,7 +532,7 @@ describe( 'TimerJobs', function() {
   describe( 'static functionality', function() {
     it( 'should have an array of added Timers', function() {
       expect( TimerJobs.timers ).to.be.an( 'array' );
-      expect( TimerJobs.timers ).to.have.length( 19 );
+      expect( TimerJobs.timers ).to.have.length( 20 );
     });
 
     it( 'should find Timers by reference', function() {
@@ -507,7 +544,7 @@ describe( 'TimerJobs', function() {
     it( 'should find Timers by namespace', function() {
       let timers = TimerJobs.findTimers( 'namespace', '' );
       expect( timers ).to.be.an( 'array' );
-      expect( timers ).to.have.length( 15 );
+      expect( timers ).to.have.length( 16 );
     });
 
     it( 'should find Timers by other properties', function() {
@@ -517,7 +554,7 @@ describe( 'TimerJobs', function() {
       let restart  = TimerJobs.findTimers( 'restartOn', 'restartEvent' );
       let infinite = TimerJobs.findTimers( 'infinite', false );
 
-      expect( level ).to.have.length( 14 );
+      expect( level ).to.have.length( 15 );
       expect( start ).to.have.length( 2 );
       expect( stop ).to.have.length( 1 );
       expect( restart ).to.have.length( 1 );
@@ -537,11 +574,11 @@ describe( 'TimerJobs', function() {
     });
 
     it( 'should remove multiple Timers', function() {
-      expect( TimerJobs.timers ).to.have.length( 18 );
+      expect( TimerJobs.timers ).to.have.length( 19 );
 
       TimerJobs.removeTimers( TimerJobs.findTimers( 'reference', 'timer' ) );
 
-      expect( TimerJobs.timers ).to.have.length( 2 );
+      expect( TimerJobs.timers ).to.have.length( 3 );
     });
   });
 });

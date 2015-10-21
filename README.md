@@ -179,13 +179,16 @@ Start the Timer
 `timer.stop(): void`    
 Stop the Timer   
 
+`timer.restart( interval?: number ): void`   
+Restarts the timer iff it has previously started, optionally set a new interval   
+
 `timer.started(): boolean`    
 Returns `true` if the Timer is started   
 
 `timer.stopped(): boolean`    
 Returns `true` if the Timer is stopped   
 
-`timer.waitTimer(): number`    
+`timer.waitTime(): number`    
 Returns the time in milliseconds until the next job execution  
 
 ##### Variables

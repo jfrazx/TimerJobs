@@ -1,6 +1,6 @@
 {
   "name": "timerjobs",
-  "version": "1.1.1",
+  "version": "1.2.1",
   "description": "TimerJobs is a simple way to create recurring tasks that can react to events.",
   "main": "index.js",
   "directories": {
