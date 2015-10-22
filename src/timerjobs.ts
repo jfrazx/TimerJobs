@@ -163,7 +163,8 @@ export class TimerJobs implements ITimerJobs {
 
       this.timer = setInterval( this.go.bind( this ), this.interval );
 
-      this.emitter.emit( 'jobStart' + this.LEVEL[ this.emitLevel ] );
+      if ( this.emitLevel )
+        this.emitter.emit( 'jobStart' + this.LEVEL[ this.emitLevel ] );
 
       if ( this.immediate )
         this.go();
