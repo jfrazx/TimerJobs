@@ -5,5 +5,8 @@
 *.log
 *.map
 
+!index.d.ts
+
 typings/
 node_modules/
+test/

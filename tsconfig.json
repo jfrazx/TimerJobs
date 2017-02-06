@@ -1,21 +1,19 @@
 {
     "compilerOptions": {
+        "declaration": true,
         "module": "commonjs",
         "target": "es5",
-        "noImplicitAny": false,
-        "removeComments": false,
+        "noImplicitAny": true,
+        "removeComments": true,
         "preserveConstEnums": true,
         "sourceMap": false
     },
     "filesGlob": [
         "*.ts",
-        "./src/**/*.ts",
-        "./typings/*"
+        "src/**/*.ts"
     ],
     "files": [
         "index.ts",
-        "src/timerjobs.ts",
-        "typings/tsd.d.ts"
-    ],
-    "exclude": []
+        "src/timerjobs.ts"
+    ]
 }

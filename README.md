@@ -6,15 +6,15 @@ TimerJobs is a simple way to create recurring tasks that can react to events.
 
 ## Installation
 
-```
+```bash
 npm install timerjobs [--save]
 ```
 
 ## Basic Usage
 
-```
-var TimerJob = require( 'timerjobs' );
-var timer    = new TimerJob({
+```javascript
+const TimerJob = require( 'timerjobs' );
+const timer    = new TimerJob({
     interval: 10000,
     immediate: true,  // runs immediately upon starting the timer
     ignoreErrors: true
@@ -32,8 +32,8 @@ timer.start();
 
 A Timer that only runs 'n' times and starts upon creation is easy to implement.
 
-```
-var timer = new TimerJob({
+```javascript
+const timer = new TimerJob({
     autoStart: true,
     interval: 10000,
     infinite: false,
@@ -52,7 +52,7 @@ var timer = new TimerJob({
 
 The Timer can emit events when job tasks happen. By default it utilizes EventEmitter2,
 your own eventemitter may be passed as option `emitter: myEventEmitter` to more fully
-integrate TimerJobs into your application.
+integrate TimerJobs into your application. The first argument is always the instance of the timer.
 
 `jobStart`:  
   Emitted when the job is started  
@@ -83,11 +83,11 @@ Emitted events may also be refined with options `namespace` and `reference` and 
 * 3: job\<task\> + \<namespace\> + \<reference\>
 * 4: job\<task\> + \<reference\>
 
-```
-var timer = new TimerJob({
+```javascript
+const timer = new TimerJob({
     interval: 10000,
     autoStart: true,
-    emitLevel: 4,
+    emitLevel: 3,
     namespace: 'someNamespace',
     reference: 'mySuperTimer'
   }, function( done ) {
@@ -112,8 +112,8 @@ Your Timer can react to events so that it may automatically start, stop or resta
 Simply set the options `startOn`, `stopOn`, or `restartOn` with the event to listen.
 Additionally you may supply callbacks for each listen event, respectively:    `startCallback`, `stopCallback` and `restartCallback`.
 
-```
-var timer = new TimerJob({
+```javascript
+const timer = new TimerJob({
     interval: 10000,
     immediate: true,
     emitter: myEventEmitter,
@@ -133,6 +133,7 @@ var timer = new TimerJob({
     restartCallback: function() {
 
       // do things when your timer restarts
+      // this only runs iff your timer has previously run
 
     }
   }, function( done ) {
@@ -148,10 +149,10 @@ var timer = new TimerJob({
 The callback will only execute if the timer action is taken.
 
 ### TimerJobs Class
+```javascript
+const timer = new TimerJob( options, callback );
 ```
-var timer = new TimerJob( options, callback );
-```
-##### Option:Default
+##### Option: Default
 `autoStart: false` \<boolean\> - Should the Timer start on creation?   
 `blocking: true` \<boolean\> - Should we block execution if we're already executing   
 `countdown: 1` \<number\> - The number of times the timer should execute before stopping, `infinite` must be false   
@@ -204,8 +205,8 @@ An array of Errors that may have occurred during execution
 
 ### Static Functionality   
 
-```
-var timer = new TimerJob({
+```javascript
+const timer = new TimerJob({
     autoStart: true,
     interval: 10000,
     infinite: false,
@@ -223,19 +224,23 @@ var timer = new TimerJob({
 ```
 An array of all timers that have been created    
 
-`var timers = TimerJob.timers;`
+```javascript
+const timers = TimerJob.timers;
+```
 
 Find timers by reference, namespace or any other property    
 
-```
-var refFound   = TimerJob.findTimers( 'reference', 'fancyTimer' );
-var nsFound    = TimerJob.findTimers( 'namespace', 'someNamespace' );
-var countFound = TimerJob.findTimers( 'countdown', 10 );
-var levelFound = TimerJob.findTimers( 'emitLevel', 1 );
+```javascript
+const refFound   = TimerJob.findTimers( 'reference', 'fancyTimer' );
+const nsFound    = TimerJob.findTimers( 'namespace', 'someNamespace' );
+const countFound = TimerJob.findTimers( 'countdown', 10 );
+const levelFound = TimerJob.findTimers( 'emitLevel', 1 );
 ```
 Remove one or more timers.    
 
-`TimerJob.removeTimers( TimerJob.findTimers( 'reference', 'fancyTimer' ) ): void;`
+```javascript
+TimerJob.removeTimers( TimerJob.findTimers( 'reference', 'fancyTimer' ) ): void;
+```
 
 By default the Timer being removed will also be stopped. A second argument of `false`
 will keep the timer running (assuming it already is).

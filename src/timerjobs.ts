@@ -7,7 +7,6 @@ export class TimerJobs implements ITimerJobs {
   public blocking: boolean;
   public busy: boolean;
   public callback: Function;
-  public countdown: number; // public face of _countdown
   public delimiter: string;
   public emitter: any;
   public emitLevel: number;
@@ -34,10 +33,13 @@ export class TimerJobs implements ITimerJobs {
   public stopOn: string;
   public stopCallback: Function;
 
-  public timer: number; // NodeJS.Timer id
+  // NodeJS.Timer id
+  public timer: number;
 
-  private _countdown: number; // manipulate internally
-  private __countdown: number; // track original value
+  // manipulate internally
+  private _countdown: number;
+  // track original value
+  private __countdown: number;
   private LEVEL: { [ level: string ]:  string };
   private start_wait: number = 0;
   private hasStarted: boolean = false;
@@ -54,26 +56,27 @@ export class TimerJobs implements ITimerJobs {
         options = {};
     }
 
-    if ( !callback || typeof callback !== 'function' )
+    if ( !callback || typeof callback !== 'function' ) {
       throw new Error( 'TimerJobs Error: a callback must be provided' );
+    }
 
     // if the job is being performed, should we block another from starting?
-    this.blocking = options.blocking === undefined ? true : options.blocking;
+    this.blocking = options.blocking === undefined ? true : Boolean( options.blocking );
 
     // interval between job executions
     this.interval = this.isInteger( options.interval ) ? options.interval : 3000;
 
     // autostart or ..?
-    this.autoStart = !( !options.autoStart );
+    this.autoStart = Boolean( options.autoStart );
 
     // start this job without waiting for interval
-    this.immediate = !( !options.immediate );
+    this.immediate = Boolean( options.immediate );
 
     // should we ignore errors?
-    this.ignoreErrors = !( !options.ignoreErrors );
+    this.ignoreErrors = Boolean( options.ignoreErrors );
 
     // run forever or countdown times?
-    this.infinite = options.infinite === undefined ? true : options.infinite;
+    this.infinite = options.infinite === undefined ? true : Boolean( options.infinite );
     // if we don't run forever, we'll run countdown times
     this.countdown = ( options.countdown && options.countdown > 1 ) ? Math.floor( options.countdown ) : 1;
 
@@ -120,14 +123,17 @@ export class TimerJobs implements ITimerJobs {
     */
     this.emitLevel = ( this.isInteger( options.emitLevel )
                         && options.emitLevel >= 0 && options.emitLevel <= 4 )
-                        ? options.emitLevel : 1;
+                          ? options.emitLevel
+                          : 1;
 
     // protecting you from yourself
     if ( !this.namespace.length ) {
-      if ( this.emitLevel === 2 )
+      if ( this.emitLevel === 2 ) {
         this.emitLevel = 1;
-      else if ( this.emitLevel === 3 )
+      }
+      else if ( this.emitLevel === 3 ) {
         this.emitLevel = 4;
+      }
     }
 
     this.LEVEL = {
@@ -142,8 +148,9 @@ export class TimerJobs implements ITimerJobs {
 
     this.setupListeners();
 
-    if ( this.autoStart )
+    if ( this.autoStart ) {
       this.start();
+    }
 
     TimerJobs.timers.push( this );
   }
@@ -158,16 +165,19 @@ export class TimerJobs implements ITimerJobs {
 
       this.hasStarted = true;
 
-      if ( this.countdown < 1 )
+      if ( this.countdown < 1 ) {
         this.countdown = this.__countdown;
+      }
 
       this.timer = setInterval( this.go.bind( this ), this.interval );
 
-      if ( this.emitLevel )
-        this.emitter.emit( 'jobStart' + this.LEVEL[ this.emitLevel ] );
+      if ( this.emitLevel ) {
+        this.emitter.emit( `jobStart${this.LEVEL[ this.emitLevel ]}`, this );
+      }
 
-      if ( this.immediate )
+      if ( this.immediate ) {
         this.go();
+      }
     }
   }
 
@@ -176,7 +186,7 @@ export class TimerJobs implements ITimerJobs {
   * @return <Boolean>
   */
   public stopped(): boolean {
-    return this.timer == null;
+    return this.timer === null;
   }
 
   /**
@@ -184,7 +194,7 @@ export class TimerJobs implements ITimerJobs {
   * @return <boolean>
   */
   public started() : boolean {
-    return !( !this.timer );
+    return Boolean( this.timer );
   }
 
   /**
@@ -195,8 +205,9 @@ export class TimerJobs implements ITimerJobs {
     if ( this.timer ) {
       clearInterval( this.timer );
 
-      if ( this.emitLevel )
-        this.emitter.emit( 'jobStop' + this.LEVEL[ this.emitLevel ] );
+      if ( this.emitLevel ) {
+        this.emitter.emit( `jobStop${this.LEVEL[ this.emitLevel ]}`, this );
+      }
 
       this.timer = null;
       this.start_wait = 0;
@@ -209,8 +220,9 @@ export class TimerJobs implements ITimerJobs {
   * @return <void>
   */
   public restart( interval: number = this.interval ): void {
-    if ( !this.isInteger( interval ) || interval < 1 )
+    if ( !this.isInteger( interval ) || interval < 1 ) {
       interval = this.interval;
+    }
 
     this.interval = interval;
 
@@ -225,10 +237,36 @@ export class TimerJobs implements ITimerJobs {
   * @return <number>
   */
   public waitTime(): number {
-    if ( !this.start_wait )
+    if ( !this.start_wait ) {
       return this.start_wait;
+    }
 
     return this.start_wait + this.interval - Date.now();
+  }
+
+  /**
+  * Retrieve the current value of countdown
+  * @return <number>
+  */
+  get countdown(): number {
+    return this._countdown;
+  }
+
+  /**
+  * Set countdown to a new integer
+  * @param <number> value: The new value for countdown
+  * @return <void>
+  */
+  set countdown( value: number ) {
+    if ( !this.isInteger( value ) ) {
+      throw new Error( 'TimerJobs Error: countdown must be an integer value' );
+    }
+
+    if ( value < 1 ) {
+      value = 1;
+    }
+
+    this.__countdown = this._countdown = value;
   }
 
   /**
@@ -237,12 +275,13 @@ export class TimerJobs implements ITimerJobs {
   * @param <string> match: What the property value should match
   * @return <TimerJobs[]>
   */
-  public static findTimers( property: string, match: any ): TimerJobs[] {
-    let timers: TimerJobs[] = [];
+  public static findTimers<K extends keyof TimerJobs>( property: K, match: TimerJobs[K] ): TimerJobs[] {
+    const timers: TimerJobs[] = [];
 
     this.timers.forEach( function( timer ) {
-      if ( timer[ property ] === match )
+      if ( timer[ property ] === match ) {
         timers.push( timer );
+      }
     });
 
     return timers;
@@ -257,11 +296,12 @@ export class TimerJobs implements ITimerJobs {
   public static removeTimers( timers: TimerJobs, stop: boolean ): void;
   public static removeTimers( timers: TimerJobs[], stop: boolean ): void;
   public static removeTimers( timers: any, stop: boolean = true ): void {
-    if ( !Array.isArray( timers ) )
+    if ( !Array.isArray( timers ) ) {
       timers = [ timers ];
+    }
 
     timers.forEach( ( timer: TimerJobs ) => {
-      let index = TimerJobs.timers.indexOf( timer );
+      const index = TimerJobs.timers.indexOf( timer );
 
       if ( index >= 0 ) {
         TimerJobs.timers.splice( index, 1 );
@@ -276,21 +316,20 @@ export class TimerJobs implements ITimerJobs {
   * @private
   */
   private go(): void {
-
     if ( !this.busy || !this.blocking ) {
       this.busy = true;
 
-      if ( this.emitLevel )
-        this.emitter.emit( 'jobBegin' + this.LEVEL[ this.emitLevel ] );
+      if ( this.emitLevel ) {
+        this.emitter.emit( `jobBegin${this.LEVEL[ this.emitLevel ]}`, this );
+      }
 
       ++this.executions;
+      this.start_wait = Date.now();
 
-      if ( this.callback )
+      if ( this.callback ) {
         this.callback( this.done.bind( this ) );
-
+      }
     }
-
-    this.start_wait = Date.now();
   }
 
   /**
@@ -303,30 +342,33 @@ export class TimerJobs implements ITimerJobs {
   private done( err?: Error, ...args: any[] ): void {
 
     if ( this.emitLevel ) {
-      let emission = 'jobEnd' + this.LEVEL[ this.emitLevel ];
-      args.unshift( emission );
-      this.emitter.emit.apply( this.emitter, args );
+     const emission = `jobEnd${this.LEVEL[ this.emitLevel ]}`;
+      this.emitter.emit.apply( this.emitter, [ emission, this ].concat( args ));
     }
 
     if ( err ) {
       let level: string;
       this.errors.push( err );
 
-      if ( this.emitLevel )
+      if ( this.emitLevel ) {
         level = this.LEVEL[ this.emitLevel ];
-      else
+      }
+      else {
         level = this.LEVEL[ 1 ];
+      }
 
-      this.emitter.emit( 'jobError' + level, this.errors );
+      this.emitter.emit( `jobError${level}`, this, this.errors );
 
-      if ( !this.ignoreErrors )
+      if ( !this.ignoreErrors ) {
         this.stop();
+      }
     }
 
     if ( !this.infinite ) {
       if ( --this._countdown < 1 ) {
-        if ( this.emitLevel )
-          this.emitter.emit( 'jobComplete' + this.LEVEL[ this.emitLevel ] );
+        if ( this.emitLevel ) {
+          this.emitter.emit( `jobComplete${this.LEVEL[ this.emitLevel ]}`, this );
+        }
 
         this.stop();
       }
@@ -341,17 +383,17 @@ export class TimerJobs implements ITimerJobs {
   * @private
   */
   private setupListeners(): void {
-
-    var self = this;
+    const self = this;
 
     // do we want the timer to listen for and stop on a particular event?
     if ( this.stopOn ) {
       this.emitter.on( this.stopOn, function() {
         self.stop();
 
-          // callback to perform if the stop on event fires
-          if ( self.stopCallback )
-            self.stopCallback.apply( null, Array.prototype.slice.call( arguments ) );
+        // callback to perform if the stop on event fires
+        if ( self.stopCallback ) {
+          self.stopCallback.apply( null, Array.prototype.slice.call( arguments ) );
+        }
       });
     }
 
@@ -365,8 +407,9 @@ export class TimerJobs implements ITimerJobs {
         if ( self.stopped() ) {
           self.start();
 
-          if ( self.startCallback )
+          if ( self.startCallback ) {
             self.startCallback.apply( null, Array.prototype.slice.call( arguments ) );
+          }
         }
       });
     }
@@ -399,21 +442,6 @@ export class TimerJobs implements ITimerJobs {
            && Math.floor( value ) === value;
   }
 }
-
-Object.defineProperty( TimerJobs.prototype, 'countdown', {
-  get: function(): number {
-    return this._countdown;
-  },
-  set: function( value: number ): void {
-    if ( !this.isInteger( value ) )
-      throw new Error( 'TimerJobs Error: countdown must be an integer value' );
-
-    if ( value < 1 )
-      value = 1;
-
-    this.__countdown = this._countdown = value;
-  }
-});
 
 export interface ITimerJobs extends ITimerJobsOptions {
   /**

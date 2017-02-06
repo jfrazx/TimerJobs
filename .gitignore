@@ -6,6 +6,7 @@
 *.map
 
 typings/
+typings/**/*
 node_modules/
 
 !test/**
