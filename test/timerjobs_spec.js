@@ -117,7 +117,6 @@ describe( 'TimerJobs', function() {
         expect( errorCompleted ).to.equal( 1 );
         done();
       }, 23 );
-
     });
 
     it( 'should ignore errors', function( done ) {
@@ -134,8 +133,8 @@ describe( 'TimerJobs', function() {
       setTimeout( function(){
         ignoreErrors.stop();
 
-        expect( ignoreErrorsCompleted ).to.equal( 3 );
-        expect( ignoreErrors.errors ).to.have.length( 3 );
+        expect( ignoreErrorsCompleted ).to.be.at.least( 3 );
+        expect( ignoreErrors.errors.length ).to.be.at.least( 3 );
         done();
       }, 30 );
     });
