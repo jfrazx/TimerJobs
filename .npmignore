@@ -10,7 +10,7 @@ typings.json
 .editorconfig
 .travis.yml
 
-!index.d.ts
+!src/timerjobs.d.ts
 
 typings/
 node_modules/

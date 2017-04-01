@@ -10,9 +10,11 @@
         "compileOnSave": true
     },
     "filesGlob": [
+        "*.ts",
         "src/**/*.ts"
     ],
     "files": [
+        "index.ts",
         "src/timerjobs.ts"
     ]
 }

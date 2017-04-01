@@ -24,9 +24,10 @@
   },
   "scripts": {
     "commit": "git-cz",
+    "compile": "tsc",
     "coverage:check": "istanbul check-coverage --statements 95 --functions 100 --lines 95 --branches 95",
     "coverage:report": "cat ./coverage/lcov.info | codecov",
-    "coverage:test": "istanbul cover _mocha -- -R spec ./test/",
+    "coverage:test": "istanbul cover _mocha -- -R spec test",
     "postinstall": "typings install",
     "precommit": "npm run coverage:test && npm run coverage:check",
     "prepush": "npm run coverage:test",
