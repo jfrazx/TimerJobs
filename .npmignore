@@ -4,9 +4,16 @@
 *.ts
 *.log
 *.map
+tsconfig.json
+typings.json
+.eslintrc
+.editorconfig
+.travis.yml
 
 !index.d.ts
 
 typings/
 node_modules/
 test/
+.vscode/
+coverage/

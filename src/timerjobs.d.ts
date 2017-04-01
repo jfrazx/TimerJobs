@@ -27,6 +27,7 @@ export declare class TimerJobs implements ITimerJobs {
     private start_wait;
     private hasStarted;
     static timers: TimerJobs[];
+    static emitter: any;
     constructor(options: ITimerJobsOptions, callback: (done: Function) => void);
     constructor(callback: (done: Function) => void);
     start(): void;

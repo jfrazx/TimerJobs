@@ -6,14 +6,13 @@
         "noImplicitAny": true,
         "removeComments": true,
         "preserveConstEnums": true,
-        "sourceMap": false
+        "sourceMap": true,
+        "compileOnSave": true
     },
     "filesGlob": [
-        "*.ts",
         "src/**/*.ts"
     ],
     "files": [
-        "index.ts",
         "src/timerjobs.ts"
     ]
 }

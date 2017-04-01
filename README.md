@@ -1,5 +1,11 @@
-
 # TimerJobs
+[![Dependencies](https://david-dm.org/jfrazx/TimerJobs.svg?style=plastic)](https://libraries.io/npm/timerjobs)
+[![Build Status](https://travis-ci.org/jfrazx/TimerJobs.svg?branch=master?style=plastic)](https://travis-ci.org/jfrazx/TimerJobs)
+[![codecov](https://codecov.io/gh/jfrazx/TimerJobs/branch/master/graph/badge.svg?style=plastic)](https://codecov.io/gh/jfrazx/TimerJobs)
+[![License](https://img.shields.io/npm/l/timerjobs.svg?style=plastic)](https://www.npmjs.com/package/timerjobs)
+[![NPM Downloads](https://img.shields.io/npm/dt/timerjobs.svg?style=plastic)](https://www.npmjs.com/package/timerjobs)
+[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=plastic)](http://commitizen.github.io/cz-cli/)
+
 
 TimerJobs is a simple way to create recurring tasks that can react to events.
 
@@ -51,25 +57,24 @@ const timer = new TimerJob({
 ### Events
 
 The Timer can emit events when job tasks happen. By default it utilizes EventEmitter2,
-your own eventemitter may be passed as option `emitter: myEventEmitter` to more fully
-integrate TimerJobs into your application. The first argument is always the instance of the timer.
+your own eventemitter may be passed as option `emitter: myEventEmitter` to more fully integrate TimerJobs into your application. Optionally, you may also set a default emitter for all timers: `TimerJobs.emitter = myDefaultEmitter`. The first argument is (almost) always the instance of the timer.
 
-`jobStart`:  
+`jobStart`:  (instance)
   Emitted when the job is started  
 
-`jobStop`:  
+`jobStop`:  (instance)
   Emitted when the job is stopped, a task may still be executing
 
-`jobBegin`:  
+`jobBegin`: (instance)
   Emitted every time a job execution begins  
 
-`jobEnd`:  
-  Emitted every time a job execution completes, i.e when `done()` is called  
+`jobEnd`:  (instance, ...args)
+  Emitted every time a job execution completes, i.e when `done(null, ...args)` is called.
 
-`jobError`:  
+`jobError`:  (err, instance, [errors])
   Emitted whenever `done( err )` is called with an Error  
 
-`jobComplete`:  
+`jobComplete`:  (instance)
   Emitted when `infinite` is false and `countdown` reaches 0   
 
 The above events, with the exception of `jobError`, can be silenced by setting
@@ -222,10 +227,19 @@ const timer = new TimerJob({
   }
 );
 ```
+#### Timers Array
+
 An array of all timers that have been created    
 
 ```javascript
 const timers = TimerJob.timers;
+```
+
+#### Default Emitter
+
+A default event emitter. An emitter passed with options takes precedence.
+```javascript
+TimerJob.emitter = myDefaultEmitter;
 ```
 
 Find timers by reference, namespace or any other property    
@@ -242,9 +256,5 @@ Remove one or more timers.
 TimerJob.removeTimers( TimerJob.findTimers( 'reference', 'fancyTimer' ) ): void;
 ```
 
-By default the Timer being removed will also be stopped. A second argument of `false`
+By default, the Timer being removed will also be stopped. A second argument of `false`
 will keep the timer running (assuming it already is).
-
-#### Origins
-
-Based on https://github.com/grahamkennery/timer-jobs

@@ -1,6 +1,8 @@
 'use strict';
+/* eslint max-len: 0 */
+/* eslint max-statements: 0 */
 
-const TimerJob      = require( '../index' ),
+const TimerJob    = require( '../index' ),
     TimerJobs     = require( '../index' ),
     EventEmitter2 = require( 'eventemitter2' ).EventEmitter2,
     chai          = require( 'chai' ),
@@ -8,7 +10,7 @@ const TimerJob      = require( '../index' ),
 
 describe( 'TimerJobs', function() {
 
-  this.timeout( 1500 );
+  this.timeout( 120 );
 
   describe( 'assign values', function() {
     it( 'should assign default values', function() {
@@ -41,7 +43,7 @@ describe( 'TimerJobs', function() {
       expect( allDefaults.timer ).to.be.null;
       expect( allDefaults.emitLevel ).to.equal( 1 );
       expect( allDefaults.callback ).to.be.a( 'function' );
-      expect( allDefaults.LEVEL[ allDefaults.emitLevel ] ).to.equal( '' );
+      expect( allDefaults.LEVEL[allDefaults.emitLevel] ).to.equal( '' );
     });
 
     it( 'should accept options in place of default values', function() {
@@ -78,7 +80,7 @@ describe( 'TimerJobs', function() {
       expect( noDefaults.immediate ).to.be.true;
       expect( noDefaults.ignoreErrors ).to.be.true;
       expect( noDefaults.infinite ).to.be.false;
-      expect( noDefaults.countdown ).to.equal( 2 ); // it will already execute once
+      expect( noDefaults.countdown ).to.equal( 2 ); // will already execute once
       expect( noDefaults.reference ).to.equal( 'noDefaults' );
       expect( noDefaults.namespace ).to.equal( 'mynamespace' );
       expect( noDefaults.stopOn ).to.equal( 'stoppingEvent' );
@@ -90,7 +92,7 @@ describe( 'TimerJobs', function() {
       expect( noDefaults.delimiter ).to.equal( '##' );
       expect( noDefaults.emitter ).to.equal( emitter );
       expect( noDefaults.emitLevel ).to.equal( 3 );
-      expect( noDefaults.LEVEL[ noDefaults.emitLevel ] ).to.equal( '##mynamespace##noDefaults' );
+      expect( noDefaults.LEVEL[noDefaults.emitLevel] ).to.equal( '##mynamespace##noDefaults' );
     });
   });
 
@@ -99,26 +101,29 @@ describe( 'TimerJobs', function() {
 
       let errorCompleted = 0;
       const errorStop = new TimerJob({
-        interval: 200
-      }, function( done ){
+        interval: 10
+      }, function( done ) {
         errorCompleted++;
         done( new Error( 'something went wrong' ));
       });
 
       errorStop.start();
+      // should have no effect
+      errorStop.start();
 
-      // this should give it plenty of time to have been called more than once, thus (dis)proving stop on error
-      setTimeout( function(){
+      // this should give it plenty of time to have been called more than once,
+      // thus (dis)proving stop on error
+      setTimeout( function() {
         expect( errorCompleted ).to.equal( 1 );
         done();
-      }, 500 );
+      }, 23 );
 
     });
 
     it( 'should ignore errors', function( done ) {
       let ignoreErrorsCompleted = 0;
       const ignoreErrors = new TimerJob({
-        interval: 100,
+        interval: 7,
         autoStart: true,
         ignoreErrors: true
       }, function( done ){
@@ -132,7 +137,7 @@ describe( 'TimerJobs', function() {
         expect( ignoreErrorsCompleted ).to.equal( 3 );
         expect( ignoreErrors.errors ).to.have.length( 3 );
         done();
-      }, 400 );
+      }, 30 );
     });
 
     it( 'should throw an error when assigning a non-integer value', function() {
@@ -172,10 +177,11 @@ describe( 'TimerJobs', function() {
   describe( 'execute according to options', function() {
     it( 'should run once', function( done ) {
       let runOnceCompleted = 0;
-      const runOnce = new TimerJob({
-        interval: 200,
+      new TimerJob({
+        interval: 10,
         autoStart: true,
-        infinite: false
+        infinite: false,
+        emitLevel: 0
       }, function( done ) {
         runOnceCompleted++;
         done();
@@ -184,13 +190,13 @@ describe( 'TimerJobs', function() {
       setTimeout( function() {
         expect( runOnceCompleted ).to.equal( 1 );
         done();
-      }, 600 );
+      }, 25 );
     });
 
     it( 'should run twice', function( done ) {
       let runTwiceCompleted = 0;
       const runTwice = new TimerJob({
-        interval: 100,
+        interval: 5,
         autoStart: true,
         infinite: false,
         countdown: 2.2 // will floor it
@@ -206,13 +212,13 @@ describe( 'TimerJobs', function() {
         expect( runTwiceCompleted ).to.equal( 2 );
         expect( runTwice.executions ).to.equal( 2 );
         done();
-      }, 500 );
+      }, 13 );
     });
 
     it( 'should be able to change infinite and countdown later', function( done ) {
       let changeLaterCompleted = 0;
       const changeLater = new TimerJob({
-        interval: 100,
+        interval: 5,
         autoStart: true
       }, function( done ) {
         changeLaterCompleted++;
@@ -227,21 +233,21 @@ describe( 'TimerJobs', function() {
         expect( changeLater.countdown ).to.equal( 2 );
 
         setTimeout( function() {
-          expect( changeLaterCompleted ).to.equal( 4 );
+          expect( changeLaterCompleted ).to.equal( 3 );
           expect( changeLater.countdown ).to.equal( 0 );
 
-          changeLater.interval = 200;
+          changeLater.interval = 15;
           changeLater.start();
 
           // defineProperty fixes this previous shortcoming
           expect( changeLater.countdown ).to.equal( 2 );
 
           setTimeout( function(){
-            expect( changeLaterCompleted ).to.equal( 5 );
+            expect( changeLaterCompleted ).to.equal( 4 );
             done();
-          }, 300);
-        }, 300);
-      }, 300);
+          }, 15);
+        }, 10);
+      }, 10);
     });
 
     it( 'should continue to execute in non-blocking mode', function( done ) {
@@ -251,7 +257,7 @@ describe( 'TimerJobs', function() {
         autoStart: true,
         infinite: false,
         countdown: 3,
-        interval: 200,
+        interval: 20,
         immediate: true
       }, function() {
         notDoneCompleted++;
@@ -263,7 +269,7 @@ describe( 'TimerJobs', function() {
         expect( notDone.executions ).to.equal( notDoneCompleted );
         expect( notDone.countdown ).to.equal( 3 );
         done();
-      }, 820);
+      }, 82);
     });
 
     it( 'should block execution until a job finishes', function( done ) {
@@ -272,11 +278,11 @@ describe( 'TimerJobs', function() {
         blocking: true,
         autoStart: true,
         immediate: true,
-        interval: 100
+        interval: 10
       }, function( done ) {
         blockingCompleted++;
 
-        setTimeout( done, 300 );
+        setTimeout( done, 30 );
       });
 
       setTimeout( function() {
@@ -286,7 +292,7 @@ describe( 'TimerJobs', function() {
         expect( blocking.executions ).to.equal( 2 );
 
         done();
-      }, 500 );
+      }, 50 );
     });
 
     it( 'should return the time until next execution', function( done ) {
@@ -295,9 +301,9 @@ describe( 'TimerJobs', function() {
         blocking: false,
         autoStart: false,
         infinite: true,
-        interval: 2000
+        interval: 200
       }, function( done ) {
-        timeLeftCompleted++;
+        timeLeftCompleted += timeLeftCompleted;
         done();
       });
 
@@ -307,17 +313,17 @@ describe( 'TimerJobs', function() {
 
       setTimeout( function(){
         const left = timeLeft.waitTime();
-        expect( left ).to.be.above( 1000 );
-        expect( left ).to.be.below( 2000 );
+        expect( left ).to.be.above( 100 );
+        expect( left ).to.be.below( 200 );
         timeLeft.stop();
         done();
-      }, 800);
+      }, 80);
     });
 
     it( 'should restart the timer', function( done ) {
       let restartComplete = 0;
       const restart = new TimerJob({
-        interval: 100,
+        interval: 10,
         reference: 'restarter',
       }, function( done ) {
         restartComplete++;
@@ -328,7 +334,7 @@ describe( 'TimerJobs', function() {
 
       expect( restart.stopped() ).to.be.true;
       expect( restart.hasStarted ).to.be.false;
-      expect( restart.interval ).to.equal( 100 );
+      expect( restart.interval ).to.equal( 10 );
 
       restart.start();
 
@@ -336,19 +342,22 @@ describe( 'TimerJobs', function() {
         expect( restartComplete ).to.equal( 2 );
         expect( restart.hasStarted ).to.be.true;
 
-        restart.restart( 150 );
+        restart.restart( 15 );
 
         setTimeout( function() {
           expect( restart.started() ).to.be.true;
-          expect( restart.interval ).to.equal( 150 );
+          expect( restart.interval ).to.equal( 15 );
           expect( restartComplete ).to.equal( 4 );
           restart.stop();
 
+          restart.restart( 'not an integer' );
+          restart.stop();
+
+          expect( restart.interval ).to.equal( 15 );
+
           done();
-        }, 310);
-      }, 300);
-
-
+        }, 35);
+      }, 30);
     });
   });
 
@@ -395,7 +404,7 @@ describe( 'TimerJobs', function() {
     it( 'should emit when a job begins', function( done ) {
       let emitBeginComplete = 0;
       const emitBegin = new TimerJob({
-        interval: 100,
+        interval: 5,
         autoStart: true
       }, function( done ) {
         emitBeginComplete++;
@@ -406,7 +415,7 @@ describe( 'TimerJobs', function() {
         expect( emitBeginComplete ).to.be.above( -1 );
         expect( emitBeginComplete ).to.be.below( 3 );
 
-        if( emitBeginComplete === 2 ) {
+        if ( emitBeginComplete === 2 ) {
           emitBegin.stop();
           done();
         }
@@ -417,7 +426,7 @@ describe( 'TimerJobs', function() {
     it( 'should emit when a job cycle ends', function( done ) {
       let emitEndComplete = 0;
       const emitEnd = new TimerJob( {
-        interval: 100,
+        interval: 10,
         autoStart: true,
         emitLevel: 3,
         namespace: 'emitEnd'
@@ -429,25 +438,23 @@ describe( 'TimerJobs', function() {
       emitEnd.emitter.on( 'jobEnd::emitEnd::timer', function( timer,  first ) {
         const args = Array.prototype.slice.call( arguments, 1 );
         expect( first ).to.equal( 1 );
-        expect( emitEndComplete ).to.be.above( 0 );
-        expect( emitEndComplete ).to.be.below( 3 );
+        expect( emitEndComplete ).to.be.above( 0 ).and.to.be.below( 3 );
 
-        for( let i = 0; i < args.length; i++ ) {
+        for ( let i = 0; i < args.length; i++ ) {
           expect( args[i] ).to.equal( i + 1 );
         }
 
-        if( emitEndComplete === 2 ) {
+        if ( emitEndComplete === 2 ) {
           emitEnd.stop();
           done();
         }
-
       });
     });
 
     it( 'should emit when a job completes', function( done ) {
       let emitCompleteCompleted = 0;
       const emitComplete = new TimerJob({
-        interval: 100,
+        interval: 10,
         autoStart: true,
         immediate: true,
         infinite: false,
@@ -468,7 +475,7 @@ describe( 'TimerJobs', function() {
     it( 'should emit when there is an error', function( done ) {
       let emitErrorCompleted = 0;
       const emitError = new TimerJob({
-        interval: 100,
+        interval: 10,
         ignoreErrors: false, // this is the default, but lets be explict
         autoStart: true,
         emitLevel: 3 // when no 'namespace' is passed it will become level 4
@@ -477,13 +484,48 @@ describe( 'TimerJobs', function() {
         done( new Error( 'something went wrong' ) );
       });
 
-      emitError.emitter.on( 'jobError::timer', function( timer, errors ) {
-        expect( emitError === timer ).to.be.true
+      emitError.emitter.on( 'jobError::timer', function( error, timer, errors ) {
+        expect( error ).to.be.instanceof( Error );
+        expect( emitError === timer ).to.be.true;
         expect( emitErrorCompleted ).to.equal( 1 );
         expect( errors ).to.be.an( 'array' );
         expect( errors ).to.have.length( 1 );
         done();
       });
+    });
+
+    it( 'should emit on error with emitting disabled', function( done ) {
+      const emitDisabled = new TimerJob({
+        infinite: false,
+        emitLevel: 0,
+        interval: 10,
+      }, function( done ) {
+        done( new Error('I should still emit') );
+      });
+
+      emitDisabled.emitter.on( 'jobError', function( error, timer, errors ) {
+        expect( error ).to.be.instanceof( Error );
+        expect( timer ).to.equal( emitDisabled );
+        expect( errors ).to.be.an( 'array' );
+        done();
+      });
+
+      emitDisabled.start();
+    });
+
+    it( 'should not start on "restart" emit, if timer has never started', function() {
+      const neverStart = new TimerJob({
+        interval: 10,
+        restartOn: 'restartEvent'
+      }, function( done ) {
+        done();
+      });
+
+      expect(neverStart.hasStarted).to.be.false;
+
+      neverStart.emitter.emit('restartEvent');
+
+      expect(neverStart.hasStarted).to.be.false;
     });
   });
 
@@ -533,19 +575,28 @@ describe( 'TimerJobs', function() {
   describe( 'static functionality', function() {
     it( 'should have an array of added Timers', function() {
       expect( TimerJobs.timers ).to.be.an( 'array' );
-      expect( TimerJobs.timers ).to.have.length( 20 );
+      expect( TimerJobs.timers.length ).to.be.at.least( 20 );
+    });
+
+    it ( 'should have a default emitter', function() {
+      expect( TimerJobs.emitter ).to.be.undefined;
+      const someEmitter = new EventEmitter2();
+      TimerJobs.emitter = someEmitter;
+
+      const timer = new TimerJobs(function() {});
+      expect( timer.emitter === someEmitter ).to.be.true;
     });
 
     it( 'should find Timers by reference', function() {
       let timers = TimerJobs.findTimers( 'reference', 'timer' );
       expect( timers ).to.be.an( 'array' );
-      expect( timers ).to.have.length( 16 );
+      expect( timers.length ).to.be.at.least( 16 );
     });
 
     it( 'should find Timers by namespace', function() {
       let timers = TimerJobs.findTimers( 'namespace', '' );
       expect( timers ).to.be.an( 'array' );
-      expect( timers ).to.have.length( 16 );
+      expect( timers.length ).to.be.at.least( 16 );
     });
 
     it( 'should find Timers by other properties', function() {
@@ -555,27 +606,29 @@ describe( 'TimerJobs', function() {
       let restart  = TimerJobs.findTimers( 'restartOn', 'restartEvent' );
       let infinite = TimerJobs.findTimers( 'infinite', false );
 
-      expect( level ).to.have.length( 15 );
-      expect( start ).to.have.length( 2 );
-      expect( stop ).to.have.length( 1 );
-      expect( restart ).to.have.length( 1 );
-      expect( infinite ).to.have.length( 7 );
+      expect( level.length ).to.at.least( 15 );
+      expect( start.length ).to.be.at.least( 2 );
+      expect( stop.length ).to.be.at.least( 1 );
+      expect( restart.length ).to.be.at.least( 1 );
+      expect( infinite.length ).to.be.at.least( 7 );
     });
 
-    it( 'should remove a single Timer', function() {
+    it( 'should remove a single Timer and not error on second attempt', function() {
       const timer = TimerJobs.findTimers( 'reference', 'noDefaults' );
 
       expect( timer ).to.have.length( 1 );
 
-      TimerJobs.removeTimers( timer[ 0 ] );
+      TimerJobs.removeTimers( timer[0], true );
 
       const empty = TimerJobs.findTimers( 'reference', 'noDefaults' );
 
       expect( empty ).to.have.length( 0 );
+
+      expect( TimerJobs.removeTimers, timer[0] ).to.not.throw(Error);
     });
 
     it( 'should remove multiple Timers', function() {
-      expect( TimerJobs.timers ).to.have.length( 19 );
+      expect( TimerJobs.timers.length ).to.be.at.least( 19 );
 
       TimerJobs.removeTimers( TimerJobs.findTimers( 'reference', 'timer' ) );
 

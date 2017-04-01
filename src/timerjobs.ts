@@ -44,7 +44,10 @@ export class TimerJobs implements ITimerJobs {
   private start_wait: number = 0;
   private hasStarted: boolean = false;
 
+  // array of all timers
   public static timers: TimerJobs[] = [];
+  // a default emitter
+  public static emitter: any;
 
 
   constructor( options: ITimerJobsOptions, callback: ( done: Function ) => void );
@@ -56,7 +59,7 @@ export class TimerJobs implements ITimerJobs {
         options = {};
     }
 
-    if ( !callback || typeof callback !== 'function' ) {
+    if ( typeof callback !== 'function' ) {
       throw new Error( 'TimerJobs Error: a callback must be provided' );
     }
 
@@ -104,7 +107,7 @@ export class TimerJobs implements ITimerJobs {
     this.delimiter = options.delimiter || '::';
 
     // the eventemitter to utilize
-    this.emitter = options.emitter || new events.EventEmitter2( { wildcard: true, delimiter: this.delimiter } );
+    this.emitter = options.emitter || TimerJobs.emitter || new events.EventEmitter2( { wildcard: true, delimiter: this.delimiter } );
 
     // the jobtimer
     this.timer = null;
@@ -162,7 +165,6 @@ export class TimerJobs implements ITimerJobs {
   public start(): void {
     if ( !this.timer ) {
       this.start_wait = Date.now();
-
       this.hasStarted = true;
 
       if ( this.countdown < 1 ) {
@@ -193,7 +195,7 @@ export class TimerJobs implements ITimerJobs {
   * Is the timer started?
   * @return <boolean>
   */
-  public started() : boolean {
+  public started(): boolean {
     return Boolean( this.timer );
   }
 
@@ -325,10 +327,7 @@ export class TimerJobs implements ITimerJobs {
 
       ++this.executions;
       this.start_wait = Date.now();
-
-      if ( this.callback ) {
-        this.callback( this.done.bind( this ) );
-      }
+      this.callback( this.done.bind( this ) );
     }
   }
 
@@ -357,7 +356,7 @@ export class TimerJobs implements ITimerJobs {
         level = this.LEVEL[ 1 ];
       }
 
-      this.emitter.emit( `jobError${level}`, this, this.errors );
+      this.emitter.emit( `jobError${level}`, err, this, this.errors );
 
       if ( !this.ignoreErrors ) {
         this.stop();
