@@ -4,7 +4,6 @@
 *.js
 *.log
 *.map
-index.d.ts
 
 typings/
 typings/**/*

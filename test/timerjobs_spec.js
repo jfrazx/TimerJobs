@@ -2,8 +2,7 @@
 /* eslint max-len: 0 */
 /* eslint max-statements: 0 */
 
-const TimerJob    = require( '../index' ),
-    TimerJobs     = require( '../index' ),
+const TimerJobs   = require( '../index' ).TimerJobs,
     EventEmitter2 = require( 'eventemitter2' ).EventEmitter2,
     chai          = require( 'chai' ),
     expect        = chai.expect;
@@ -15,7 +14,7 @@ describe( 'TimerJobs', function() {
   describe( 'assign values', function() {
     it( 'should assign default values', function() {
 
-      const allDefaults = new TimerJob( function( done ) {
+      const allDefaults = new TimerJobs( function( done ) {
         done();
       });
 
@@ -49,7 +48,7 @@ describe( 'TimerJobs', function() {
     it( 'should accept options in place of default values', function() {
       const emitter = new EventEmitter2();
 
-      const noDefaults = new TimerJob({
+      const noDefaults = new TimerJobs({
         blocking: false,
         interval: 100,
         autoStart: true,
@@ -100,7 +99,7 @@ describe( 'TimerJobs', function() {
     it( 'should stop the timer on an Error', function( done ) {
 
       let errorCompleted = 0;
-      const errorStop = new TimerJob({
+      const errorStop = new TimerJobs({
         interval: 10
       }, function( done ) {
         errorCompleted++;
@@ -121,7 +120,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should ignore errors', function( done ) {
       let ignoreErrorsCompleted = 0;
-      const ignoreErrors = new TimerJob({
+      const ignoreErrors = new TimerJobs({
         interval: 7,
         autoStart: true,
         ignoreErrors: true
@@ -140,7 +139,7 @@ describe( 'TimerJobs', function() {
     });
 
     it( 'should throw an error when assigning a non-integer value', function() {
-      const passError = new TimerJob( function( done ) {
+      const passError = new TimerJobs( function( done ) {
           done();
       });
 
@@ -150,7 +149,7 @@ describe( 'TimerJobs', function() {
     });
 
     it( 'should assign 1 if an integer less than such is passed', function() {
-      const lessThan = new TimerJob( {
+      const lessThan = new TimerJobs( {
         infinite: false,
         countdown: 30,
         reference: 'lessThan',
@@ -168,7 +167,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should throw an error if no callback is defined', function() {
       expect( function() {
-        new TimerJob();
+        new TimerJobs();
       }).to.throw( 'TimerJobs Error: a callback must be provided' );
     });
   });
@@ -176,7 +175,7 @@ describe( 'TimerJobs', function() {
   describe( 'execute according to options', function() {
     it( 'should run once', function( done ) {
       let runOnceCompleted = 0;
-      new TimerJob({
+      new TimerJobs({
         interval: 10,
         autoStart: true,
         infinite: false,
@@ -194,7 +193,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should run twice', function( done ) {
       let runTwiceCompleted = 0;
-      const runTwice = new TimerJob({
+      const runTwice = new TimerJobs({
         interval: 5,
         autoStart: true,
         infinite: false,
@@ -216,7 +215,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should be able to change infinite and countdown later', function( done ) {
       let changeLaterCompleted = 0;
-      const changeLater = new TimerJob({
+      const changeLater = new TimerJobs({
         interval: 5,
         autoStart: true
       }, function( done ) {
@@ -251,7 +250,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should continue to execute in non-blocking mode', function( done ) {
       let notDoneCompleted = 0;
-      const notDone = new TimerJob({
+      const notDone = new TimerJobs({
         blocking: false,
         autoStart: true,
         infinite: false,
@@ -273,7 +272,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should block execution until a job finishes', function( done ) {
       let blockingCompleted = 0;
-      const blocking = new TimerJob({
+      const blocking = new TimerJobs({
         blocking: true,
         autoStart: true,
         immediate: true,
@@ -296,7 +295,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should return the time until next execution', function( done ) {
       let timeLeftCompleted = 0;
-      const timeLeft = new TimerJob({
+      const timeLeft = new TimerJobs({
         blocking: false,
         autoStart: false,
         infinite: true,
@@ -321,7 +320,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should restart the timer', function( done ) {
       let restartComplete = 0;
-      const restart = new TimerJob({
+      const restart = new TimerJobs({
         interval: 10,
         reference: 'restarter',
       }, function( done ) {
@@ -363,7 +362,7 @@ describe( 'TimerJobs', function() {
   describe( 'emit events', function() {
     it( 'should emit when a job starts', function( done ) {
       let emitStartComplete = 0;
-      const emitStart = new TimerJob( {
+      const emitStart = new TimerJobs( {
         emitLevel: 2
       }, function( done ) {
         emitStartComplete++;
@@ -382,7 +381,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should emit when a job stops', function( done ) {
       let emitStopComplete = 0;
-      const emitStop = new TimerJob( {
+      const emitStop = new TimerJobs( {
         autoStart: true,
         immediate: true,
         emitLevel: 4,
@@ -402,7 +401,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should emit when a job begins', function( done ) {
       let emitBeginComplete = 0;
-      const emitBegin = new TimerJob({
+      const emitBegin = new TimerJobs({
         interval: 5,
         autoStart: true
       }, function( done ) {
@@ -424,7 +423,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should emit when a job cycle ends', function( done ) {
       let emitEndComplete = 0;
-      const emitEnd = new TimerJob( {
+      const emitEnd = new TimerJobs( {
         interval: 10,
         autoStart: true,
         emitLevel: 3,
@@ -452,7 +451,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should emit when a job completes', function( done ) {
       let emitCompleteCompleted = 0;
-      const emitComplete = new TimerJob({
+      const emitComplete = new TimerJobs({
         interval: 10,
         autoStart: true,
         immediate: true,
@@ -473,7 +472,7 @@ describe( 'TimerJobs', function() {
 
     it( 'should emit when there is an error', function( done ) {
       let emitErrorCompleted = 0;
-      const emitError = new TimerJob({
+      const emitError = new TimerJobs({
         interval: 10,
         ignoreErrors: false, // this is the default, but lets be explict
         autoStart: true,
@@ -494,7 +493,7 @@ describe( 'TimerJobs', function() {
     });
 
     it( 'should emit on error with emitting disabled', function( done ) {
-      const emitDisabled = new TimerJob({
+      const emitDisabled = new TimerJobs({
         infinite: false,
         emitLevel: 0,
         interval: 10,
@@ -513,7 +512,7 @@ describe( 'TimerJobs', function() {
     });
 
     it( 'should not start on "restart" emit, if timer has never started', function() {
-      const neverStart = new TimerJob({
+      const neverStart = new TimerJobs({
         interval: 10,
         restartOn: 'restartEvent'
       }, function( done ) {
@@ -530,7 +529,7 @@ describe( 'TimerJobs', function() {
 
   describe( 'react on events', function() {
     let eventsCompleted = 0;
-    const eventsTimer = new TimerJob({
+    const eventsTimer = new TimerJobs({
       interval: 100,
       immediate: true,
       startOn: 'startEvent',

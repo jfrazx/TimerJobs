@@ -1,20 +1,19 @@
 {
-    "compilerOptions": {
-        "declaration": true,
-        "module": "commonjs",
-        "target": "es5",
-        "noImplicitAny": true,
-        "removeComments": true,
-        "preserveConstEnums": true,
-        "sourceMap": true,
-        "compileOnSave": true
-    },
-    "filesGlob": [
-        "*.ts",
-        "src/**/*.ts"
-    ],
-    "files": [
-        "index.ts",
-        "src/timerjobs.ts"
-    ]
+  "compilerOptions": {
+    "declaration": true,
+    "module": "commonjs",
+    "target": "es5",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "pretty": true
+  },
+  "compileOnSave": true,
+  "filesGlob": [
+    "*.ts"
+  ],
+  "files": [
+    "index.ts"
+  ]
 }

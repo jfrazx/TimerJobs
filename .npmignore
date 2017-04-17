@@ -5,12 +5,12 @@
 *.log
 *.map
 tsconfig.json
-typings.json
+tslint.json
 .eslintrc
 .editorconfig
 .travis.yml
 
-!src/timerjobs.d.ts
+!index.d.ts
 
 typings/
 node_modules/

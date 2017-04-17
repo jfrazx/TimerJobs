@@ -7,11 +7,11 @@
     "test": "test"
   },
   "dependencies": {
-    "eventemitter2": "^3.0.2"
+    "eventemitter2": "^4.1.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "codecov.io": "^0.1.6",
+    "codecov": "^2.1.0",
     "commitizen": "^2.9.6",
     "cz-conventional-changelog": "^2.0.0",
     "eslint": "^3.19.0",
@@ -19,16 +19,16 @@
     "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
     "semantic-release": "^6.3.6",
-    "typescript": "^2.2.2",
-    "typings": "^2.1.0"
+    "typescript": "^2.3.0",
+    "typings": "^2.1.1"
   },
   "scripts": {
     "commit": "git-cz",
     "compile": "tsc",
     "coverage:check": "istanbul check-coverage --statements 95 --functions 100 --lines 95 --branches 95",
-    "coverage:report": "cat ./coverage/lcov.info | codecov",
+    "coverage:report": "codecov",
     "coverage:test": "istanbul cover _mocha -- -R spec test",
-    "postinstall": "typings install",
+    "typings:install": "typings install",
     "precommit": "npm run coverage:test && npm run coverage:check",
     "prepush": "npm run coverage:test",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
@@ -52,7 +52,7 @@
     "setTimeout",
     "setInterval"
   ],
-  "types": "src/timerjobs.d.ts",
+  "types": "index.d.ts",
   "author": "jfrazx",
   "license": "MIT",
   "bugs": {

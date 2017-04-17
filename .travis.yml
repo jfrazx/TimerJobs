@@ -11,15 +11,15 @@ node_js:
   - '4'
 install:
   - npm install
-  - npm run postinstall
+  - npm run typings:install
 before_script:
   - npm prune
   - npm run compile
 script:
   - npm run coverage:test
   - npm run coverage:check
-after_success:
   - npm run coverage:report
+after_success:
   - npm run semantic-release
 branches:
   except:

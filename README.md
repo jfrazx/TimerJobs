@@ -1,11 +1,11 @@
 # TimerJobs
-[![Dependencies](https://david-dm.org/jfrazx/TimerJobs.svg?style=plastic)](https://libraries.io/npm/timerjobs)
-[![Build Status](https://travis-ci.org/jfrazx/TimerJobs.svg?branch=master?style=plastic)](https://travis-ci.org/jfrazx/TimerJobs)
+[![Dependencies Status](https://david-dm.org/jfrazx/timerjobs/status.svg)](https://david-dm.org/jfrazx/timerjobs)
+[![devDependencies Status](https://david-dm.org/jfrazx/timerjobs/dev-status.svg)](https://david-dm.org/jfrazx/timerjobs?type=dev)
+[![Master Build Status](https://img.shields.io/travis/jfrazx/TimerJobs/master.svg?style=plastic)]()
 [![codecov](https://codecov.io/gh/jfrazx/TimerJobs/branch/master/graph/badge.svg?style=plastic)](https://codecov.io/gh/jfrazx/TimerJobs)
 [![License](https://img.shields.io/npm/l/timerjobs.svg?style=plastic)](https://www.npmjs.com/package/timerjobs)
-[![NPM Downloads](https://img.shields.io/npm/dt/timerjobs.svg?style=plastic)](https://www.npmjs.com/package/timerjobs)
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=plastic)](http://commitizen.github.io/cz-cli/)
-
+[![NPM Total](https://img.shields.io/npm/dt/timerjobs.svg?style=plastic)](https://www.npmjs.com/package/timerjobs)
+[![Commitizen Friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=plastic)](http://commitizen.github.io/cz-cli/)
 
 TimerJobs is a simple way to create recurring tasks that can react to events.
 
@@ -19,7 +19,7 @@ npm install timerjobs [--save]
 ## Basic Usage
 
 ```javascript
-const TimerJob = require( 'timerjobs' );
+const TimerJob = require( 'timerjobs' ).TimerJobs;
 const timer    = new TimerJob({
     interval: 10000,
     immediate: true,  // runs immediately upon starting the timer
