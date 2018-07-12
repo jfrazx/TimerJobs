@@ -5,8 +5,6 @@
 *.log
 *.map
 
-typings/
-typings/**/*
 node_modules/
 coverage/
 !test/**

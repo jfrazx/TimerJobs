@@ -1,19 +1,15 @@
 {
   "compilerOptions": {
-    "declaration": true,
+    "declaration": false,
     "module": "commonjs",
     "target": "es5",
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "pretty": true
   },
   "compileOnSave": true,
-  "filesGlob": [
-    "*.ts"
-  ],
-  "files": [
-    "index.ts"
-  ]
+  "filesGlob": ["*.ts"],
+  "files": ["index.ts"]
 }

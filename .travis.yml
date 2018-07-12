@@ -6,11 +6,11 @@ cache:
 notifications:
   email: false
 node_js:
-  - '7'
-  - '6'
+  - '10'
+  - '9'
+  - '8'
 install:
   - npm install
-  - npm run typings:install
 before_script:
   - npm prune
   - npm run compile

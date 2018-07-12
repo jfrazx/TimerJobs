@@ -3,36 +3,36 @@
   "version": "0.0.0-development",
   "description": "TimerJobs is a simple way to create recurring tasks that can react to events.",
   "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
-  "dependencies": {
-    "eventemitter2": "^4.1.0"
-  },
-  "devDependencies": {
-    "chai": "^3.5.0",
-    "codecov": "^2.1.0",
-    "commitizen": "^2.9.6",
-    "cz-conventional-changelog": "^2.0.0",
-    "eslint": "^3.19.0",
-    "husky": "^0.13.3",
-    "istanbul": "^0.4.5",
-    "mocha": "^3.2.0",
-    "semantic-release": "^6.3.6",
-    "typescript": "^2.3.0",
-    "typings": "^2.1.1"
-  },
   "scripts": {
     "commit": "git-cz",
     "compile": "tsc",
     "coverage:check": "istanbul check-coverage --statements 95 --functions 100 --lines 95 --branches 95",
     "coverage:report": "codecov",
     "coverage:test": "istanbul cover _mocha -- -R spec test",
-    "typings:install": "typings install",
+    "test:coverage": "npm run coverage:test",
     "precommit": "npm run coverage:test && npm run coverage:check",
     "prepush": "npm run coverage:test",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "test": "mocha -R spec ./test/"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "eventemitter2": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/eventemitter2": "^4.1.0",
+    "chai": "^4.1.2",
+    "codecov": "^3.0.4",
+    "commitizen": "^2.10.1",
+    "cz-conventional-changelog": "^2.1.0",
+    "eslint": "^5.1.0",
+    "husky": "^0.14.3",
+    "istanbul": "^0.4.5",
+    "mocha": "^5.2.0",
+    "semantic-release": "^15.7.1",
+    "typescript": "^2.9.2"
   },
   "repository": {
     "type": "git",
