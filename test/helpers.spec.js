@@ -1,7 +1,6 @@
 'use strict';
 
-const chai = require('chai');
-const { expect } = chai;
+const { expect } = require('chai');
 const {
   not,
   isString,
@@ -9,7 +8,7 @@ const {
   isNumber,
   inRange,
   isFunction,
-} = require('../lib');
+} = require('../dist/helpers');
 
 describe('TimerJob Helpers', () => {
   it('should return true if value is a string', () => {

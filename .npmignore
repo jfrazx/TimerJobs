@@ -9,6 +9,10 @@ tslint.json
 .eslintrc
 .editorconfig
 .travis.yml
+.prettierrc
+.nycrc
+.releaserc
+*.lcov
 
 !index.d.ts
 
@@ -17,3 +21,5 @@ node_modules/
 test/
 .vscode/
 coverage/
+.nyc_output
+yarn.lock

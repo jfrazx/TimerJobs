@@ -4,7 +4,12 @@
 *.js
 *.log
 *.map
+*.d.ts
+*.lcov
 
 node_modules/
 coverage/
 !test/**
+.nyc_output
+dist/
+.vscode/

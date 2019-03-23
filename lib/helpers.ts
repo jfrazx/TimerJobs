@@ -3,14 +3,14 @@ export function isType(type: string, value: any): boolean {
 }
 
 export function isEmptyString(value: any): boolean {
-  return isString(value) && (<string>value).trim() === '';
+  return isString(value) && value.trim() === '';
 }
 
-export function isString(value: any): boolean {
+export function isString(value: any): value is string {
   return isType('string', value);
 }
 
-export function isNumber(value: any): boolean {
+export function isNumber(value: any): value is number {
   return isType('number', value);
 }
 
@@ -20,11 +20,11 @@ export function isNumber(value: any): boolean {
  * @return <boolean>
  * @private
  */
-export function isInteger(value: any): boolean {
+export function isInteger(value: any): value is number {
   return isNumber(value) && isFinite(value) && Math.floor(value) === value;
 }
 
-export function isFunction(value: any): boolean {
+export function isFunction(value: any): value is Function {
   return isType('function', value);
 }
 

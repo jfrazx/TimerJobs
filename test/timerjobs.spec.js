@@ -2,10 +2,9 @@
 /* eslint max-len: 0 */
 /* eslint max-statements: 0 */
 
-const TimerJobs = require('../index').TimerJobs,
-  EventEmitter2 = require('eventemitter2').EventEmitter2,
-  chai = require('chai'),
-  expect = chai.expect;
+const { TimerJobs } = require('../dist');
+const { EventEmitter2 } = require('eventemitter2');
+const { expect } = require('chai');
 
 describe('TimerJobs', function() {
   this.timeout(120);
@@ -29,11 +28,11 @@ describe('TimerJobs', function() {
       expect(allDefaults.reference).to.equal('timer');
       expect(allDefaults.namespace).to.equal('');
       expect(allDefaults.stopOn).to.be.null;
-      expect(allDefaults.stopCallback).to.be.null;
       expect(allDefaults.startOn).to.be.null;
-      expect(allDefaults.startCallback).to.be.null;
       expect(allDefaults.restartOn).to.be.null;
-      expect(allDefaults.restartCallback).to.be.null;
+      expect(allDefaults.stopCallback).to.be.a('function');
+      expect(allDefaults.startCallback).to.be.a('function');
+      expect(allDefaults.restartCallback).to.be.a('function');
       expect(allDefaults.delimiter).to.equal('::');
       expect(allDefaults.emitter).to.be.instanceof(EventEmitter2);
       expect(allDefaults.busy).to.be.false;
