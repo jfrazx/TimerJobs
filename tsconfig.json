@@ -1,15 +1,24 @@
 {
   "compilerOptions": {
-    "declaration": false,
-    "module": "commonjs",
-    "target": "es5",
-    "noImplicitAny": true,
+    "target": "es6" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019' or 'ESNEXT'. */,
+    "module": "commonjs" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
+    // "lib": [],                             /* Specify library files to be included in the compilation. */
+    "sourceMap": true,
+    "outDir": "./dist",
+    // "rootDir": "./",                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
+
     "removeComments": true,
-    "preserveConstEnums": true,
-    "sourceMap": false,
-    "pretty": true,
-    "outDir": "dist"
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": false,
+    // "strictFunctionTypes": true,           /* Enable strict checking of function types. */
+    // "strictBindCallApply": true,           /* Enable strict 'bind', 'call', and 'apply' methods on functions. */
+    // "strictPropertyInitialization": true,  /* Enable strict checking of property initialization in classes. */
+    // "noImplicitThis": true,                /* Raise error on 'this' expressions with an implied 'any' type. */
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": false
   },
-  "compileOnSave": true,
-  "filesGlob": ["*.ts"]
+  "exclude": ["node_modules"]
 }
