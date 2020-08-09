@@ -13,6 +13,7 @@ tslint.json
 .nycrc
 .releaserc
 *.lcov
+.vscode/
 
 !index.d.ts
 

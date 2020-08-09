@@ -1,270 +1,176 @@
-import { inRange, isFunction, isInteger, isString, not } from './helpers';
-import {
-  ITimerJobs,
-  ITimerJobsOptions,
-  TimerCallback,
-} from './timerjobs.interface';
+import { ITimerJobs, ITimerJobsOptions, TimerCallback } from './interfaces';
+import { isInteger, not, isObject, isFunction } from './helpers';
+import { EmitLevels } from './emit-level';
+import { Options } from './options';
+import { Emitter } from './emitter';
 
-import * as events from 'eventemitter2';
+export * from './emit-level';
 
-const noop = () => {};
+type TimerPredicate = (
+  timer: TimerJobs,
+  index: number,
+  timers: TimerJobs[],
+) => boolean;
 
 export class TimerJobs implements ITimerJobs {
-  autoStart: boolean;
-  blocking: boolean;
-  busy: boolean;
+  busy = false;
   callback: Function;
-  delimiter: string;
-  emitter: any;
   errors: Error[] = [];
   executions: number = 0;
+  hasStarted: boolean = false;
+  timer: NodeJS.Timeout = null;
 
-  ignoreErrors: boolean;
-  immediate: boolean;
-  interval: number;
-  infinite: boolean;
+  options: Options;
 
-  namespace: string;
-  reference: string;
-
-  // restart the timer on event w/ callback
-  restartOn: string;
-  restartCallback: Function;
-
-  // start the timer on event w/ callback
-  startOn: string;
-  startCallback: Function;
-
-  // stop the timer on event w/ callback
-  stopOn: string;
-  stopCallback: Function;
-
-  // NodeJS.Timer id
-  timer: NodeJS.Timeout;
-
-  // manipulate internally
+  private _emitter: Emitter;
   private _countdown: number;
-  // track original value
-  private __countdown: number;
-  private LEVEL: { [level: string]: string };
-  private start_wait: number = 0;
-  private hasStarted: boolean = false;
+  private startWait: number = 0;
 
-  private _emitLevel: number;
-  // array of all timers
   static timers: TimerJobs[] = [];
-  // a default emitter
-  static emitter: any;
 
-  constructor(options: ITimerJobsOptions, callback: TimerCallback);
-  constructor(callback: TimerCallback);
-  constructor(options?: any, callback?: TimerCallback) {
-    if (isFunction(options)) {
-      callback = options;
-      options = {} as ITimerJobsOptions;
-    }
-
-    if (not(isFunction(callback))) {
-      throw new Error('TimerJobs Error: a callback must be provided');
-    }
-
-    // if the job is being performed, should we block another from starting?
-    this.blocking =
-      options.blocking === undefined ? true : Boolean(options.blocking);
-
-    // interval between job executions
-    this.interval = isInteger(options.interval) ? options.interval : 3000;
-
-    // autostart or ..?
-    this.autoStart = Boolean(options.autoStart);
-
-    // start this job without waiting for interval
-    this.immediate = Boolean(options.immediate);
-
-    // should we ignore errors?
-    this.ignoreErrors = Boolean(options.ignoreErrors);
-
-    // run forever or countdown times?
-    this.infinite =
-      options.infinite === undefined ? true : Boolean(options.infinite);
-    // if we don't run forever, we'll run countdown times
-    this.countdown = options.countdown;
-
-    // a string reference for this timerjob
-    this.reference = options.reference || 'timer';
-
-    // if we operate in multiple namespace and want to distinguish between them
-    this.namespace = isString(options.namespace) ? options.namespace : '';
-
-    // should we listen for an event to stop the timer on?
-    this.stopOn = options.stopOn || null;
-    // if stopOn is set we can callback if that event occurs
-    this.stopCallback = isFunction(options.stopCallback)
-      ? options.stopCallback
-      : noop;
-
-    // should we listen for an event to start the timer on?
-    this.startOn = options.startOn || null;
-    // if startOn is set we can callback if that event occurs
-    this.startCallback = isFunction(options.startCallback)
-      ? options.startCallback
-      : noop;
-
-    // should we listen for an event to restart the timer on?
-    this.restartOn =
-      options.restartOn && options.restartOn.trim().length
-        ? options.restartOn
-        : null;
-    // if restartOn is set we can callback if that event occurs
-    this.restartCallback = isFunction(options.restartCallback)
-      ? options.restartCallback
-      : noop;
-
-    // a delimiter for emitLevel and the default eventemitter2
-    this.delimiter = options.delimiter || '::';
-
-    // the eventemitter to utilize
-    this.emitter =
-      options.emitter ||
-      TimerJobs.emitter ||
-      new events.EventEmitter2({ wildcard: true, delimiter: this.delimiter });
-
-    // the jobtimer
-    this.timer = null;
-    this.busy = false;
-
-    this.callback = callback;
-
-    /**
-     * Emit level
-     * @default <number> 1
-     * 0: disabled
-     * 1: job<task>
-     * 2: job<task> + <namespace>
-     * 3: job<task> + <namespace> + <reference>
-     * 4: job<task> + <reference>
-     */
-    this.emitLevel = options.emitLevel;
-
-    // protecting you from yourself
-    if (!this.namespace.length) {
-      if (this.emitLevel === 2) {
-        this.emitLevel = 1;
-      } else if (this.emitLevel === 3) {
-        this.emitLevel = 4;
-      }
-    }
-
-    this.LEVEL = {
-      1: '',
-      2: this.delimiter + this.namespace,
-      3: this.delimiter + this.namespace + this.delimiter + this.reference,
-      4: this.delimiter + this.reference,
-    };
-
-    // keep track of original so we can reassign if the timer gets restarted
-    // this._countdown = this.countdown;
-
-    this.setupListeners();
-
-    if (this.autoStart) {
-      this.start();
+  constructor(options?: ITimerJobsOptions);
+  constructor(callback?: TimerCallback, options?: ITimerJobsOptions);
+  constructor(callback?: any, options: ITimerJobsOptions = {}) {
+    if (isObject(callback)) {
+      options = callback;
+      callback = null;
     }
 
     TimerJobs.timers.push(this);
+
+    this.options = new Options(options);
+    this._emitter = new Emitter(this, this.options);
+    const { countdown, autoStart } = this.options;
+
+    this.countdown = countdown;
+    this.callback = callback;
+
+    if (autoStart) {
+      this.start();
+    }
+  }
+
+  static set emitter(value: any) {
+    Emitter.emitter = value;
+  }
+
+  static get emitter() {
+    return Emitter.emitter;
   }
 
   /**
    * Start the timer unless it is already started
-   * @return <void>
+   *
+   * @memberof TimerJobs
    */
-  public start(): void {
+  public start(): TimerJobs {
     if (!this.timer) {
-      this.start_wait = Date.now();
+      if (not(isFunction(this.callback))) {
+        throw new Error('TimerJobs Error: a callback must be provided');
+      }
+
+      const opts = this.options;
+      this.startWait = Date.now();
       this.hasStarted = true;
 
       if (this.countdown < 1) {
-        this.countdown = this.__countdown;
+        this.countdown = opts.countdown;
       }
 
-      this.timer = setInterval(this.go.bind(this), this.interval);
+      this.timer = setInterval(this.go.bind(this), opts.interval);
+      this.emit('jobStart', null, this);
 
-      if (this.emitLevel) {
-        this.emitter.emit(`jobStart${this.LEVEL[this.emitLevel]}`, this);
-      }
-
-      if (this.immediate) {
+      if (opts.immediate) {
         this.go();
       }
     }
+
+    return this;
+  }
+
+  private emit(event: string, error?: Error, ...args: any[]): void {
+    this._emitter.emit(event, {
+      error,
+      args,
+    });
   }
 
   /**
    * Is the timer stopped?
-   * @return <Boolean>
+   *
+   * @returns {boolean}
+   * @memberof TimerJobs
    */
-  public stopped(): boolean {
+  get isStopped(): boolean {
     return this.timer === null;
   }
 
   /**
    * Is the timer started?
-   * @return <boolean>
+   *
+   * @returns {boolean}
+   * @memberof TimerJobs
    */
-  public started(): boolean {
+  get isStarted(): boolean {
     return Boolean(this.timer);
   }
 
   /**
    * Stop the Timer
-   * @return <void>
+   *
+   * @memberof TimerJobs
    */
-  public stop(): void {
+  public stop(): TimerJobs {
     if (this.timer) {
       clearInterval(this.timer);
 
-      if (this.emitLevel) {
-        this.emitter.emit(`jobStop${this.LEVEL[this.emitLevel]}`, this);
-      }
-
+      this.emit('jobStop', null, this);
       this.timer = null;
-      this.start_wait = 0;
+      this.startWait = 0;
     }
+
+    return this;
   }
 
   /**
    * Restart the timer, only if it has previous run
-   * @param <number> interval: The new optional interval to assign
-   * @return <void>
+   *
+   * @param {number} [interval]
+   * @memberof TimerJobs
    */
-  public restart(interval: number = this.interval): void {
-    if (not(isInteger(interval)) || interval < 1) {
-      interval = this.interval;
+  public restart(interval?: number): TimerJobs {
+    if (isInteger(interval) && interval > 1) {
+      this.options.interval = interval;
     }
-
-    this.interval = interval;
 
     if (this.hasStarted) {
       this.stop();
       this.start();
     }
+
+    return this;
   }
 
   /**
    * Determine wait time until next execution in milliseconds
-   * @return <number>
+   *
+   * @returns {number}
+   * @memberof TimerJobs
    */
-  public waitTime(): number {
-    if (!this.start_wait) {
-      return this.start_wait;
+  get waitTime(): number {
+    if (!this.startWait) {
+      return this.startWait;
     }
 
-    return this.start_wait + this.interval - Date.now();
+    return this.startWait + this.options.interval - Date.now();
   }
 
   /**
    * Retrieve the current value of countdown
-   * @return <number>
+   *
+   * @readonly
+   * @type {number}
+   * @memberof TimerJobs
    */
   get countdown(): number {
     return this._countdown;
@@ -272,64 +178,90 @@ export class TimerJobs implements ITimerJobs {
 
   /**
    * Set countdown to a new integer
-   * @param <number> value: The new value for countdown
-   * @return <void>
+   *
+   * @memberof TimerJobs
    */
   set countdown(value: number) {
-    this.__countdown = this._countdown =
+    this._countdown = this.options.countdown =
       value && value > 1 ? Math.floor(value) : 1;
   }
 
-  set emitLevel(value: number) {
-    this._emitLevel = isInteger(value) && inRange(value, 0, 5) ? value : 1;
+  set emitLevel(value: EmitLevels) {
+    this.options.emitLevel = value;
   }
 
-  get emitLevel(): number {
-    return this._emitLevel;
+  get emitLevel(): EmitLevels {
+    return this.options.emitLevel;
+  }
+
+  set infinite(value: boolean) {
+    this.options.infinite = value;
+  }
+
+  get infinite() {
+    return this.options.infinite;
+  }
+
+  set interval(value: number) {
+    this.options.interval = value;
+  }
+
+  get interval() {
+    return this.options.interval;
+  }
+  get emitter() {
+    return this._emitter.emitter;
   }
 
   /**
-   * Find Timers based on property and value
-   * @param <string> property: The property to match
-   * @param <string> match: What the property value should match
-   * @return <TimerJobs[]>
+   * Find multiple timers based on predicate
+   *
+   * @static
+   * @param {TimerPredicate} predicate
+   * @returns {TimerJobs[]}
+   * @memberof TimerJobs
    */
-  public static findTimers<K extends keyof TimerJobs>(
-    property: K,
-    match: TimerJobs[K]
-  ): TimerJobs[] {
-    const timers: TimerJobs[] = [];
-
-    this.timers.forEach(function(timer) {
-      if (timer[property] === match) {
-        timers.push(timer);
-      }
-    });
-
-    return timers;
+  public static findTimers(predicate: TimerPredicate): TimerJobs[] {
+    return this.timers.filter(predicate);
   }
 
   /**
    * Remove Timers from timers array
-   * @param <TimerJobs> timers: The timer(s) to remove
-   * @param <boolean> stop: Stop the timer(s) being removed
-   * @return <void>
+   *
+   * @static
+   * @param {TimerPredicate} predicate
+   * @returns {TimerJobs[]}
+   * @memberof TimerJobs
    */
-  public static removeTimers(timers: TimerJobs, stop: boolean): void;
-  public static removeTimers(timers: TimerJobs[], stop: boolean): void;
-  public static removeTimers(timers: any, stop: boolean = true): void {
-    if (!Array.isArray(timers)) {
-      timers = [timers];
-    }
+  public static removeTimers(predicate: TimerPredicate): TimerJobs[] {
+    const timersToRemove = this.timers.filter(predicate);
 
-    timers.forEach((timer: TimerJobs) => {
-      const index = TimerJobs.timers.indexOf(timer);
+    this.timers = this.timers.filter((timer) =>
+      not(timersToRemove.includes(timer)),
+    );
 
-      if (index >= 0) {
-        TimerJobs.timers.splice(index, 1);
-        stop && timer.stop();
-      }
-    });
+    return timersToRemove;
+  }
+
+  /**
+   * Remove the passed timer
+   *
+   * @static
+   * @param {TimerJobs} timer
+   * @memberof TimerJobs
+   */
+  public static removeTimer(timer: TimerJobs): void {
+    this.timers = this.timers.filter((t) => t !== timer);
+  }
+
+  /**
+   * Stop the timer if it's running and remove the timer from the timers array
+   *
+   * @memberof TimerJobs
+   */
+  dispose() {
+    this.stop();
+    TimerJobs.removeTimer(this);
   }
 
   /**
@@ -338,55 +270,48 @@ export class TimerJobs implements ITimerJobs {
    * @private
    */
   private go(): void {
-    if (!this.busy || !this.blocking) {
+    if (!this.busy || !this.options.blocking) {
       this.busy = true;
 
-      if (this.emitLevel) {
-        this.emitter.emit(`jobBegin${this.LEVEL[this.emitLevel]}`, this);
-      }
+      this.emit('jobBegin', null, this);
 
-      ++this.executions;
-      this.start_wait = Date.now();
-      this.callback(this.done.bind(this));
+      this.executions++;
+      this.startWait = Date.now();
+
+      const args = this.callback.length ? [this.done.bind(this)] : [];
+
+      try {
+        this.callback.call(this.options.context, ...args);
+      } catch (error) {
+        this.done(error);
+      }
     }
   }
 
   /**
    * Function sent to timer callback, called when finished
-   * @param <Error> err: Error object sent back if something went wrong
-   * @param <any> args: any additional parameters sent back
-   * @return <void>
+   *
    * @private
+   * @param {Error} [err]
+   * @param {...any[]} args
+   * @memberof TimerJobs
    */
   private done(err?: Error, ...args: any[]): void {
-    if (this.emitLevel) {
-      const emission = `jobEnd${this.LEVEL[this.emitLevel]}`;
-      this.emitter.emit.apply(this.emitter, [emission, this].concat(args));
-    }
+    const { ignoreErrors, infinite } = this.options;
+    this.emit('jobEnd', null, this, ...args);
 
     if (err) {
-      let level: string;
       this.errors.push(err);
+      this.emit('jobError', err, this, this.errors);
 
-      if (this.emitLevel) {
-        level = this.LEVEL[this.emitLevel];
-      } else {
-        level = this.LEVEL[1];
-      }
-
-      this.emitter.emit(`jobError${level}`, err, this, this.errors);
-
-      if (!this.ignoreErrors) {
+      if (not(ignoreErrors)) {
         this.stop();
       }
     }
 
-    if (!this.infinite) {
+    if (not(infinite)) {
       if (--this._countdown < 1) {
-        if (this.emitLevel) {
-          this.emitter.emit(`jobComplete${this.LEVEL[this.emitLevel]}`, this);
-        }
-
+        this.emit('jobComplete', null, this);
         this.stop();
       }
     }
@@ -395,47 +320,281 @@ export class TimerJobs implements ITimerJobs {
   }
 
   /**
-   * Setup start, stop and restart listeners, if they exist
-   * @return <void>
-   * @private
+   * -------- Sugar Section -------------
    */
-  private setupListeners(): void {
-    // do we want the timer to listen for and stop on a particular event?
-    if (this.stopOn) {
-      this.emitter.on(this.stopOn, (...rest: any[]) => {
-        this.stop();
+  /**
+   * Start the interval setting process
+   * @param <number> interval: The number to assign
+   * @return <TimerJobs>
+   */
+  private _not: boolean;
+  private _event: string;
+  private _interval = 0;
 
-        // callback to perform if the stop on event fires
-        this.stopCallback.call(null, ...rest);
-      });
+  public after(interval: number, resetInterval = true): TimerJobs {
+    if (resetInterval) {
+      this.options.interval = 0;
+    }
+    this._interval = interval;
+    return this;
+  }
+  public and(interval: number): TimerJobs {
+    return this.after(interval, false);
+  }
+  /**
+   * @todo: thinking of alternate uses
+   */
+  public every(interval: number, resetInterval = true): TimerJobs {
+    return this.after(interval, resetInterval);
+  }
+
+  /**
+   * Alternative, chainable, method for assigning emit_level
+   * @param <number> level: The integer to assign
+   * @return <TimerJobs>
+   */
+  public level(level: EmitLevels): TimerJobs {
+    this.emitLevel = level;
+    return this;
+  }
+
+  /**
+   * Alternative, chainable, method for setting countdown
+   * @param <number> countdown: The number to set
+   * @return <TimerJobs>
+   */
+  public times(countdown: number): TimerJobs {
+    this.countdown = countdown;
+    return this;
+  }
+
+  /**
+   * Alternative, chainable, method for assigning a namespace
+   * @param <string> namespace: The namespace to assign
+   * @return <TimerJobs>
+   */
+  public namespace(namespace: string): TimerJobs {
+    this.options.namespace = namespace;
+    return this;
+  }
+  public namespacing(namespace: string): TimerJobs {
+    return this.namespace(namespace);
+  }
+
+  /**
+   * Alternative, chainable, method for assigning a reference
+   * @param <string> reference: The reference to assign
+   */
+  public reference(reference: string): TimerJobs {
+    this.options.reference = reference;
+    return this;
+  }
+  public referencing(reference: string): TimerJobs {
+    return this.reference(reference);
+  }
+
+  /**
+   * Alternative, chainable, method for infinite
+   * @param <number> countdown: An optional number to assign to countdown
+   * @return <TimerJobs>
+   */
+  public forever(countdown?: number): TimerJobs {
+    this.infinite = this._not ? (this._not = false) : true;
+
+    countdown && this.times(countdown);
+
+    return this;
+  }
+
+  /**
+   * Alternative, chainable, method for setting the event emitter to be used
+   * @param <any> emitter: The emitter to utilize
+   * @return <TimerJobs>
+   * @todo reinitialize listeners
+   */
+  public using(emitter: any): TimerJobs {
+    this._emitter.emitter = emitter;
+    return this;
+  }
+
+  /**
+   * Alternative, chainable, method for setting the main timer callback
+   * @param <Function> callback: The callback to utilize
+   * @return <TimerJobs>
+   */
+  public do(callback: TimerCallback): TimerJobs {
+    this.callback = callback;
+    return this;
+  }
+  public execute(callback: TimerCallback): TimerJobs {
+    return this.do(callback);
+  }
+
+  /**
+   * Alternative, chainable, method for assigning events and callbacks
+   * @param <string> event: The event to react
+   * @param <Function> callback: The optional callback
+   * @return <TimerJobs>
+   */
+  public on(event: string, callback?: Function): TimerJobs {
+    const _this: any = this;
+
+    _this.options[`${this._event}On`] = event;
+    _this.options[`${this._event}Callback`] = callback;
+    _this._emitter[`${this._event}Setup`]();
+
+    return this;
+  }
+
+  get blocking(): TimerJobs {
+    this.options.blocking = this._not ? (this._not = false) : true;
+    return this;
+  }
+  get blocks(): TimerJobs {
+    return this.blocking;
+  }
+
+  /**
+   * Sugar for immediate
+   */
+  get immediate(): TimerJobs {
+    this.options.immediate = this._not ? (this._not = false) : true;
+    return this;
+  }
+  get immediately(): TimerJobs {
+    return this.immediate;
+  }
+
+  /**
+   * Sugar negation
+   */
+  get not(): TimerJobs {
+    this._not = true;
+    return this;
+  }
+
+  /**
+   * Sugar for ignoreErrors
+   */
+  get ignore(): TimerJobs {
+    this.options.ignoreErrors = this._not ? (this._not = false) : true;
+    return this;
+  }
+  get ignoring(): TimerJobs {
+    return this.ignore;
+  }
+
+  /**
+   * Sugar for autoStart
+   */
+  get automatically(): TimerJobs {
+    const auto = this._not ? (this._not = false) : true;
+    this.options.autoStart = auto;
+
+    if (auto) {
+      setTimeout(() => this.start(), 0);
     }
 
-    /**
-     * Start the timer on event
-     * @note callback only fires if the timer was not running
-     */
-    if (this.startOn) {
-      this.emitter.on(this.startOn, (...rest: any[]) => {
-        if (this.stopped()) {
-          this.start();
+    return this;
+  }
+  get automatic() {
+    return this.automatically;
+  }
 
-          this.startCallback.call(null, ...rest);
-        }
-      });
-    }
+  /**
+   * Sugar for setting countdown
+   */
+  get once(): TimerJobs {
+    this.infinite = false;
+    this.countdown = 1;
 
-    /**
-     * Restart the timer on event
-     * @note callback only fires if the timer was not running
-     */
-    if (this.restartOn) {
-      this.emitter.on(this.restartOn, (...rest: any[]) => {
-        if (this.hasStarted) {
-          this.restart();
+    return this;
+  }
 
-          this.restartCallback.call(null, ...rest);
-        }
-      });
-    }
+  get twice(): TimerJobs {
+    this.once;
+    this.countdown++;
+    return this;
+  }
+
+  get thrice(): TimerJobs {
+    this.twice;
+    this.countdown++;
+    return this;
+  }
+
+  /**
+   * Sugar for infinite
+   */
+  get repeat(): TimerJobs {
+    this.infinite = this._not ? (this._not = false) : true;
+    return this;
+  }
+  get repeating(): TimerJobs {
+    return this.repeat;
+  }
+
+  /**
+   * Interval fun
+   */
+  get week(): TimerJobs {
+    this._interval = 1;
+    return this.weeks;
+  }
+  get weeks(): TimerJobs {
+    this._interval *= 7;
+    return this.days;
+  }
+  get day(): TimerJobs {
+    this._interval = 1;
+    return this.days;
+  }
+  get days(): TimerJobs {
+    this._interval *= 24;
+    return this.hours;
+  }
+  get hour(): TimerJobs {
+    this._interval = 1;
+    return this.hours;
+  }
+  get hours(): TimerJobs {
+    this._interval *= 60;
+    return this.minutes;
+  }
+  get minute(): TimerJobs {
+    this._interval = 1;
+    return this.minutes;
+  }
+  get minutes(): TimerJobs {
+    this._interval *= 60;
+    return this.seconds;
+  }
+  get second(): TimerJobs {
+    this.interval += 1000;
+    return this;
+  }
+  get seconds(): TimerJobs {
+    this._interval *= 1000;
+    return this.milliseconds;
+  }
+  get milliseconds(): TimerJobs {
+    this.interval += this._interval;
+    return this;
+  }
+
+  /**
+   * Event helpers
+   */
+  get starting(): TimerJobs {
+    this._event = 'start';
+    return this;
+  }
+  get stopping(): TimerJobs {
+    this._event = 'stop';
+    return this;
+  }
+  get restarting(): TimerJobs {
+    this._event = 'restart';
+    return this;
   }
 }

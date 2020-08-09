@@ -1,28 +1,7 @@
-export interface ITimerJobs extends ITimerJobsOptions {
-  /**
-   * The number of times the timer has executed
-   */
-  executions: number;
-  /**
-   * Any Errors the callback encounters are pushed into the errors array
-   */
-  errors: Error[];
-  /**
-   * Are we busy executing a task?
-   */
-  busy: boolean;
-  /**
-   * The timer to which all this is possible
-   */
-  timer: NodeJS.Timeout;
+import { EmitLevels } from './emit-level';
+import { TimerJobs } from './index';
 
-  restart(interval?: number): void;
-  start(): void;
-  stop(): void;
-  started(): boolean;
-  stopped(): boolean;
-  waitTime(): number;
-}
+export interface IOptions extends Required<ITimerJobsOptions> {}
 
 export interface ITimerJobsOptions {
   /**
@@ -49,7 +28,7 @@ export interface ITimerJobsOptions {
    * At what level should we emit job events
    * @default 1
    */
-  emitLevel?: number;
+  emitLevel?: EmitLevels;
   /**
    * The eventemitter which emits events, can pass your own emitter to better integrate
    * @default EventEmitter2
@@ -114,9 +93,40 @@ export interface ITimerJobsOptions {
    * The callback which executes when the event restarts the timer
    * @default null
    */
-  retartCallback?: Function;
+  restartCallback?: Function;
+
+  /**
+   * Context in which to call handlers
+   */
+  context?: any;
 }
 
-export interface TimerCallback {
-  (done: Function): void;
+export interface ITimerJobs {
+  restart(interval?: number): void;
+  start(): void;
+  stop(): void;
+  isStarted: boolean;
+  isStopped: boolean;
+  waitTime: number;
+
+  /**
+   * The number of times the timer has executed
+   */
+  executions: number;
+  /**
+   * Any Errors the callback encounters are pushed into the errors array
+   */
+  errors: Error[];
+  /**
+   * Are we busy executing a task?
+   */
+  busy: boolean;
+  /**
+   * The timer to which all this is possible
+   */
+  timer: NodeJS.Timeout;
 }
+
+export type Done = (error?: Error, ...args: any[]) => void;
+export type TimerCallback = (done: Done) => void;
+export type EventCallback = (timer: TimerJobs) => void;
