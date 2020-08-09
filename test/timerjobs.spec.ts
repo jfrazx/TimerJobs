@@ -1,9 +1,19 @@
+import * as FakeTimers from '@sinonjs/fake-timers';
 import { EventEmitter2 } from 'eventemitter2';
 import { TimerJobs, EmitLevel } from '../lib';
 import { expect } from 'chai';
 
 describe('TimerJobs', function () {
+  let clock: FakeTimers.InstalledClock;
   this.timeout(120);
+
+  before(() => {
+    clock = FakeTimers.install();
+  });
+
+  after(() => {
+    clock.uninstall();
+  });
 
   describe('Error Handling', () => {
     it('should stop the timer on an Error', (done) => {
@@ -22,12 +32,12 @@ describe('TimerJobs', function () {
       // should have no effect
       errorStop.start();
 
-      // this should give it plenty of time to have been called more than once,
-      // thus (dis)proving stop on error
       setTimeout(() => {
         expect(errorCompleted).to.equal(1);
         done();
-      }, 23);
+      }, 11);
+
+      clock.tick(14);
     });
 
     it('should catch errors thrown in handlers and stop timer', (done) => {
@@ -52,6 +62,8 @@ describe('TimerJobs', function () {
 
         done();
       }, 10);
+
+      clock.tick(100);
     });
 
     it('should ignore errors', (done) => {
@@ -75,6 +87,8 @@ describe('TimerJobs', function () {
         expect(ignoreErrors.errors.length).to.be.at.least(3);
         done();
       }, 30);
+
+      clock.tick(31);
     });
 
     it('should assign 1 if an integer less than such is passed', () => {
@@ -119,6 +133,8 @@ describe('TimerJobs', function () {
         expect(runOnceCompleted).to.equal(1);
         done();
       }, 25);
+
+      clock.tick(26);
     });
 
     it('should run twice', (done) => {
@@ -144,20 +160,15 @@ describe('TimerJobs', function () {
         expect(runTwice.executions).to.equal(2);
         done();
       }, 15);
+
+      clock.tick(16);
     });
 
     it('should be able to change infinite and countdown later', (done) => {
-      let changeLaterCompleted = 0;
-      const changeLater = new TimerJobs(
-        (done) => {
-          changeLaterCompleted++;
-          done();
-        },
-        {
-          interval: 5,
-          autoStart: true,
-        },
-      );
+      const changeLater = new TimerJobs((done) => done(), {
+        interval: 5,
+        autoStart: true,
+      });
 
       setTimeout(() => {
         changeLater.infinite = false;
@@ -165,23 +176,29 @@ describe('TimerJobs', function () {
 
         expect(changeLater.infinite).to.be.false;
         expect(changeLater.countdown).to.equal(2);
-
-        setTimeout(() => {
-          expect(changeLaterCompleted).to.equal(3);
-          expect(changeLater.countdown).to.equal(0);
-
-          changeLater.interval = 15;
-          changeLater.start();
-
-          // defineProperty fixes this previous shortcoming
-          expect(changeLater.countdown).to.equal(2);
-
-          setTimeout(() => {
-            expect(changeLaterCompleted).to.equal(4);
-            done();
-          }, 15);
-        }, 10);
       }, 10);
+
+      clock.tick(10);
+
+      setTimeout(() => {
+        expect(changeLater.executions).to.equal(4);
+        expect(changeLater.countdown).to.equal(0);
+        expect(changeLater.isStopped).to.be.true;
+
+        changeLater.interval = 15;
+        changeLater.start();
+
+        expect(changeLater.countdown).to.equal(2);
+      }, 10);
+
+      clock.tick(10);
+
+      setTimeout(() => {
+        expect(changeLater.executions).to.equal(6);
+        done();
+      }, 30);
+
+      clock.tick(31);
     });
 
     it('should continue to execute in non-blocking mode', (done) => {
@@ -202,6 +219,8 @@ describe('TimerJobs', function () {
         expect(notDone.countdown).to.equal(3);
         done();
       }, 82);
+
+      clock.tick(86);
     });
 
     it('should block execution until a job finishes', (done) => {
@@ -228,6 +247,8 @@ describe('TimerJobs', function () {
 
         done();
       }, 50);
+
+      clock.tick(52);
     });
 
     it('should return the time until next execution', (done) => {
@@ -256,6 +277,8 @@ describe('TimerJobs', function () {
         timeLeft.stop();
         done();
       }, 80);
+
+      clock.tick(82);
     });
 
     it('should restart the timer', (done) => {
@@ -277,28 +300,31 @@ describe('TimerJobs', function () {
       expect(restart.hasStarted).to.be.false;
       expect(restart.interval).to.equal(10);
 
-      restart.start();
-
       setTimeout(() => {
         expect(restartComplete).to.equal(2);
         expect(restart.hasStarted).to.be.true;
 
         restart.restart(15);
-
-        setTimeout(() => {
-          expect(restart.isStarted).to.be.true;
-          expect(restart.interval).to.equal(15);
-          expect(restartComplete).to.equal(4);
-          restart.stop();
-
-          restart.restart();
-          restart.stop();
-
-          expect(restart.interval).to.equal(15);
-
-          done();
-        }, 35);
       }, 30);
+
+      restart.start();
+      clock.tick(32);
+
+      setTimeout(() => {
+        expect(restart.isStarted).to.be.true;
+        expect(restart.interval).to.equal(15);
+        expect(restartComplete).to.equal(4);
+        restart.stop();
+
+        restart.restart();
+        restart.stop();
+
+        expect(restart.interval).to.equal(15);
+
+        done();
+      }, 35);
+
+      clock.tick(40);
     });
 
     it('should dispose the timer when called', () => {
@@ -393,6 +419,8 @@ describe('TimerJobs', function () {
           done();
         }
       });
+
+      clock.tick(30);
     });
 
     it('should emit when a job cycle ends', (done) => {
@@ -424,6 +452,8 @@ describe('TimerJobs', function () {
           done();
         }
       });
+
+      clock.tick(30);
     });
 
     it('should emit when a job completes', (done) => {
@@ -448,6 +478,8 @@ describe('TimerJobs', function () {
         expect(emitCompleteCompleted).to.equal(3);
         done();
       });
+
+      clock.tick(30);
     });
 
     it('should emit when there is an error', (done) => {
@@ -477,6 +509,8 @@ describe('TimerJobs', function () {
         expect(errors).to.have.length(1);
         done();
       });
+
+      clock.tick(30);
     });
 
     it('should emit on error with emitting disabled', (done) => {
@@ -503,6 +537,8 @@ describe('TimerJobs', function () {
       });
 
       emitDisabled.start();
+
+      clock.tick(30);
     });
 
     it('should not start on "restart" emit, if timer has never started', () => {
