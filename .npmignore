@@ -15,7 +15,7 @@ tslint.json
 *.lcov
 .vscode/
 
-!index.d.ts
+!*.d.ts
 
 typings/
 node_modules/

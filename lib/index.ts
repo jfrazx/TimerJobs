@@ -5,6 +5,7 @@ import { Options } from './options';
 import { Emitter } from './emitter';
 
 export * from './emit-level';
+export * from './interfaces';
 
 type TimerPredicate = (
   timer: TimerJobs,
