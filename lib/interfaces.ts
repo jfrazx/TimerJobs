@@ -1,4 +1,6 @@
+import { EmitLevels } from './emit-level';
 import { TimerJobs } from './index';
+
 export interface IOptions extends Required<ITimerJobsOptions> {}
 
 export interface ITimerJobsOptions {
@@ -92,15 +94,20 @@ export interface ITimerJobsOptions {
    * @default null
    */
   restartCallback?: Function;
+
+  /**
+   * Context in which to call handlers
+   */
+  context?: any;
 }
 
 export interface ITimerJobs {
   restart(interval?: number): void;
   start(): void;
   stop(): void;
-  started(): boolean;
-  stopped(): boolean;
-  waitTime(): number;
+  isStarted: boolean;
+  isStopped: boolean;
+  waitTime: number;
 
   /**
    * The number of times the timer has executed
@@ -119,8 +126,6 @@ export interface ITimerJobs {
    */
   timer: NodeJS.Timeout;
 }
-
-export type EmitLevels = 0 | 1 | 2 | 3 | 4;
 
 export type Done = (error?: Error, ...args: any[]) => void;
 export type TimerCallback = (done: Done) => void;

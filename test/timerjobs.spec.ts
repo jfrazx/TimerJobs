@@ -1,11 +1,11 @@
 import { EventEmitter2 } from 'eventemitter2';
-import { TimerJobs } from '../lib';
+import { TimerJobs, EmitLevel } from '../lib';
 import { expect } from 'chai';
 
 describe('TimerJobs', function () {
   this.timeout(120);
 
-  describe('error handling', () => {
+  describe('Error Handling', () => {
     it('should stop the timer on an Error', (done) => {
       let errorCompleted = 0;
       const errorStop = new TimerJobs(
@@ -28,6 +28,30 @@ describe('TimerJobs', function () {
         expect(errorCompleted).to.equal(1);
         done();
       }, 23);
+    });
+
+    it('should catch errors thrown in handlers and stop timer', (done) => {
+      let runError = 0;
+
+      const timer = new TimerJobs(
+        () => {
+          runError++;
+          throw new Error(`failed`);
+        },
+        {
+          interval: 100,
+          immediate: true,
+          autoStart: true,
+        },
+      );
+
+      setTimeout(() => {
+        expect(runError).to.equal(1);
+        expect(timer.hasStarted).to.be.true;
+        expect(timer.isStopped).to.be.true;
+
+        done();
+      }, 10);
     });
 
     it('should ignore errors', (done) => {
@@ -70,12 +94,12 @@ describe('TimerJobs', function () {
 
     it('should throw an error if no callback is defined', () => {
       expect(() => {
-        new TimerJobs();
+        new TimerJobs().start();
       }).to.throw('TimerJobs Error: a callback must be provided');
     });
   });
 
-  describe('execute according to options', () => {
+  describe('Execute According to Options', () => {
     it('should run once', (done) => {
       let runOnceCompleted = 0;
       new TimerJobs(
@@ -87,7 +111,7 @@ describe('TimerJobs', function () {
           interval: 10,
           autoStart: true,
           infinite: false,
-          emitLevel: 0,
+          emitLevel: EmitLevel.Error,
         },
       );
 
@@ -119,7 +143,7 @@ describe('TimerJobs', function () {
         expect(runTwiceCompleted).to.equal(2);
         expect(runTwice.executions).to.equal(2);
         done();
-      }, 13);
+      }, 15);
     });
 
     it('should be able to change infinite and countdown later', (done) => {
@@ -162,7 +186,7 @@ describe('TimerJobs', function () {
 
     it('should continue to execute in non-blocking mode', (done) => {
       let notDoneCompleted = 0;
-      const notDone = new TimerJobs(() => notDoneCompleted++, {
+      const notDone = new TimerJobs((_done) => notDoneCompleted++, {
         blocking: false,
         autoStart: true,
         infinite: false,
@@ -222,11 +246,11 @@ describe('TimerJobs', function () {
       );
 
       // initializes to 0
-      expect(timeLeft.waitTime()).to.equal(0);
+      expect(timeLeft.waitTime).to.equal(0);
       timeLeft.start();
 
       setTimeout(() => {
-        const left = timeLeft.waitTime();
+        const left = timeLeft.waitTime;
         expect(left).to.be.above(100);
         expect(left).to.be.below(200);
         timeLeft.stop();
@@ -249,7 +273,7 @@ describe('TimerJobs', function () {
 
       restart.restart();
 
-      expect(restart.stopped()).to.be.true;
+      expect(restart.isStopped).to.be.true;
       expect(restart.hasStarted).to.be.false;
       expect(restart.interval).to.equal(10);
 
@@ -262,7 +286,7 @@ describe('TimerJobs', function () {
         restart.restart(15);
 
         setTimeout(() => {
-          expect(restart.started()).to.be.true;
+          expect(restart.isStarted).to.be.true;
           expect(restart.interval).to.equal(15);
           expect(restartComplete).to.equal(4);
           restart.stop();
@@ -276,9 +300,33 @@ describe('TimerJobs', function () {
         }, 35);
       }, 30);
     });
+
+    it('should dispose the timer when called', () => {
+      const timer = new TimerJobs((done) => done(), {
+        immediate: true,
+        interval: 100,
+        autoStart: true,
+      });
+
+      expect(timer.hasStarted).to.be.true;
+
+      const found = TimerJobs.timers.find(
+        (currentTimer) => currentTimer === timer,
+      );
+
+      expect(found).to.not.be.undefined;
+
+      timer.dispose();
+
+      const foundAgain = TimerJobs.timers.find(
+        (currentTimer) => currentTimer === timer,
+      );
+
+      expect(foundAgain).to.be.undefined;
+    });
   });
 
-  describe('emit events', () => {
+  describe('Emit Events', () => {
     it('should emit when a job starts', (done) => {
       let emitStartComplete = 0;
       const emitStart = new TimerJobs(
@@ -287,7 +335,7 @@ describe('TimerJobs', function () {
           done();
         },
         {
-          emitLevel: 1,
+          emitLevel: EmitLevel.Event,
         },
       );
 
@@ -310,7 +358,7 @@ describe('TimerJobs', function () {
         {
           autoStart: true,
           immediate: true,
-          emitLevel: 3,
+          emitLevel: EmitLevel.Reference,
           reference: 'emitStop',
         },
       );
@@ -357,7 +405,7 @@ describe('TimerJobs', function () {
         {
           interval: 10,
           autoStart: true,
-          emitLevel: 4,
+          emitLevel: EmitLevel.NamespaceAndReference,
           namespace: 'emitEnd',
         },
       );
@@ -392,7 +440,7 @@ describe('TimerJobs', function () {
           infinite: false,
           countdown: 3,
           namespace: 'emitComplete',
-          emitLevel: 2,
+          emitLevel: EmitLevel.Namespace,
         },
       );
 
@@ -413,7 +461,7 @@ describe('TimerJobs', function () {
           interval: 10,
           ignoreErrors: false, // this is the default, but lets be explict
           autoStart: true,
-          emitLevel: 3,
+          emitLevel: EmitLevel.Reference,
         },
       );
 
@@ -438,7 +486,7 @@ describe('TimerJobs', function () {
         },
         {
           infinite: false,
-          emitLevel: 0,
+          emitLevel: EmitLevel.Error,
           interval: 10,
         },
       );
@@ -471,7 +519,7 @@ describe('TimerJobs', function () {
     });
   });
 
-  describe('react on events', () => {
+  describe('React on Events', () => {
     let eventsCompleted = 0;
 
     const eventsTimer = new TimerJobs(
@@ -488,7 +536,7 @@ describe('TimerJobs', function () {
           startOnCompleted: number,
           done: Mocha.Done,
         ) {
-          expect(startOn.started()).to.be.true;
+          expect(startOn.isStarted).to.be.true;
           expect(startOnCompleted).to.equal(0); //while it may have changed since starting, it was 0 when passed
           done();
         },
@@ -498,7 +546,7 @@ describe('TimerJobs', function () {
           stopOnCompleted: number,
           done: Mocha.Done,
         ) {
-          expect(stopOn.stopped()).to.be.true;
+          expect(stopOn.isStopped).to.be.true;
           expect(stopOnCompleted).to.equal(1);
           done();
         },
@@ -508,7 +556,7 @@ describe('TimerJobs', function () {
           restartOnCompleted: number,
           done: Mocha.Done,
         ) {
-          expect(restartOn.started()).to.be.true;
+          expect(restartOn.isStarted).to.be.true;
           expect(restartOnCompleted).to.equal(1);
           expect(restartOn.executions).to.equal(2);
           restartOn.stop();
@@ -537,9 +585,21 @@ describe('TimerJobs', function () {
         done,
       );
     });
+
+    it('should not error when no event callback is defined', () => {
+      const timer = new TimerJobs((done) => done(), {
+        startOn: 'start',
+      });
+
+      expect(() => timer.emitter.emit('start')).to.not.throw;
+
+      expect(timer.emitter.emit('start')).to.be.true;
+
+      timer.stop();
+    });
   });
 
-  describe('static functionality', () => {
+  describe('Static Functionality', () => {
     it('should have an array of added Timers', () => {
       expect(TimerJobs.timers).to.be.an('array');
       expect(TimerJobs.timers.length).to.be.at.least(19);
@@ -547,11 +607,59 @@ describe('TimerJobs', function () {
 
     it('should have a default emitter', () => {
       expect(TimerJobs.emitter).to.be.undefined;
+
       const someEmitter = new EventEmitter2();
       TimerJobs.emitter = someEmitter;
 
       const timer = new TimerJobs(() => {});
       expect(timer.emitter === someEmitter).to.be.true;
+    });
+
+    it('should find timers', () => {
+      const timers = TimerJobs.findTimers(
+        (timer) => timer.options.namespace !== '',
+      );
+
+      expect(timers).to.be.an('array');
+
+      expect(timers).to.have.length.greaterThan(1);
+    });
+
+    it('should remove a single timer', () => {
+      const timer = new TimerJobs();
+
+      const found = TimerJobs.timers.find(
+        (currentTimer) => currentTimer === timer,
+      );
+
+      expect(timer).to.equal(found);
+
+      TimerJobs.removeTimer(timer);
+
+      const foundAgain = TimerJobs.timers.find(
+        (currentTimer) => currentTimer === timer,
+      );
+
+      expect(foundAgain).to.be.undefined;
+    });
+
+    it('should remove multiple timers', () => {
+      const timerQuantity = TimerJobs.timers.length;
+      const predicate = (timer: TimerJobs) =>
+        timer.options.reference === 'timer';
+      const foundTimers = TimerJobs.findTimers(predicate);
+
+      expect(foundTimers).to.have.length.greaterThan(1);
+
+      TimerJobs.removeTimers(predicate);
+
+      const moreTimers = TimerJobs.findTimers(predicate);
+
+      expect(moreTimers).to.have.lengthOf(0);
+
+      const newTimerQuantity = TimerJobs.timers.length;
+
+      expect(timerQuantity - foundTimers.length).to.equal(newTimerQuantity);
     });
   });
 });

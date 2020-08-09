@@ -1,4 +1,6 @@
+import { EmitLevel } from '../lib/emit-level';
 import { Options } from '../lib/options';
+import { TimerJobs } from '../lib';
 import { expect } from 'chai';
 
 describe('TimerJob Options', () => {
@@ -24,6 +26,7 @@ describe('TimerJob Options', () => {
     expect(allDefaults.emitter).to.be.null;
     expect(allDefaults.emitLevel).to.equal(1);
   });
+
   it('should accept options in place of default values', function () {
     const noDefaults = new Options({
       blocking: false,
@@ -42,7 +45,7 @@ describe('TimerJob Options', () => {
       restartOn: 'restartsEvent',
       restartCallback: console.log,
       delimiter: '##',
-      emitLevel: 3,
+      emitLevel: EmitLevel.Reference,
     });
 
     expect(noDefaults.blocking).to.be.false;
@@ -63,5 +66,18 @@ describe('TimerJob Options', () => {
     expect(noDefaults.delimiter).to.equal('##');
     expect(noDefaults.emitter).to.be.null;
     expect(noDefaults.emitLevel).to.equal(3);
+  });
+
+  it('should instantiate Options through TimerJobs without providing a callback', () => {
+    expect(() => new TimerJobs()).to.not.throw;
+
+    const timer = new TimerJobs({});
+    const options = new Options();
+
+    Object.keys(options).forEach((property) => {
+      expect((timer as any).options[property]).to.equal(
+        (options as any)[property],
+      );
+    });
   });
 });

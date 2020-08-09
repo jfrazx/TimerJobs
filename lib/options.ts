@@ -1,4 +1,5 @@
-import { IOptions, ITimerJobsOptions, EmitLevels } from './interfaces';
+import { IOptions, ITimerJobsOptions } from './interfaces';
+import { EmitLevels } from './emit-level';
 import { merge } from './helpers';
 
 const noop = () => {};
@@ -22,6 +23,7 @@ const defaultOptions: IOptions = {
   startCallback: noop,
   restartOn: null,
   restartCallback: noop,
+  context: null,
 };
 
 export class Options implements IOptions {
@@ -43,6 +45,7 @@ export class Options implements IOptions {
   startCallback: Function;
   restartOn: string;
   restartCallback: Function;
+  context: any;
 
   constructor(options: ITimerJobsOptions = {}) {
     merge(this, { ...defaultOptions, ...options });

@@ -1,5 +1,5 @@
 import { EventEmitter2 } from 'eventemitter2';
-import { EmitLevels } from './interfaces';
+import { EmitLevels } from './emit-level';
 import { TimerJobs } from './index';
 import { Options } from './options';
 
@@ -13,8 +13,6 @@ interface EmitArgs {
 }
 
 export class Emitter {
-  level: number;
-
   static emitter: EventEmitter2;
   emitter: EventEmitter2;
 
@@ -30,7 +28,6 @@ export class Emitter {
   emit(action: string, { error = null, args = [] }: EmitArgs = {}): void {
     if (this.shouldEmit(this.options.emitLevel, error)) {
       const event = this.buildEvent(action, this.options.emitLevel, error);
-      // console.log('calling emit on emitter', action, error, args, event);
 
       if (error) {
         args.unshift(error);
@@ -77,50 +74,59 @@ export class Emitter {
    * @private
    */
   private setupListeners(): void {
-    const {
-      stopOn,
-      stopCallback,
-      startOn,
-      startCallback,
-      restartOn,
-      restartCallback,
-    } = this.options;
+    this.startSetup();
+    this.stopSetup();
+    this.restartSetup();
+  }
 
-    // do we want the timer to listen for and stop on a particular event?
-    if (stopOn) {
-      this.emitter.on(stopOn, (...rest: any[]) => {
-        this.timer.stop();
+  /**
+   * Start the timer on event
+   * @note callback only fires if the timer was not running
+   *
+   * @memberof Emitter
+   */
+  startSetup() {
+    const { startOn, startCallback } = this.options;
 
-        // callback to perform if the stop on event fires
-        stopCallback.apply(null, rest);
-      });
-    }
-
-    /**
-     * Start the timer on event
-     * @note callback only fires if the timer was not running
-     */
     if (startOn) {
       this.emitter.on(startOn, (...rest: any[]) => {
-        if (this.timer.stopped()) {
+        if (this.timer.isStopped) {
           this.timer.start();
 
-          startCallback.apply(null, rest);
+          startCallback.apply(this.options.context, rest);
         }
       });
     }
+  }
 
-    /**
-     * Restart the timer on event
-     * @note callback only fires if the timer was not running
-     */
+  /**
+   * Restart the timer on event
+   * @note callback only fires if the timer was not running
+   *
+   * @memberof Emitter
+   */
+  restartSetup() {
+    const { restartOn, restartCallback } = this.options;
+
     if (restartOn) {
       this.emitter.on(restartOn, (...rest: any[]) => {
         if (this.timer.hasStarted) {
           this.timer.restart();
 
-          restartCallback.apply(null, rest);
+          restartCallback.apply(this.options.context, rest);
         }
+      });
+    }
+  }
+
+  stopSetup() {
+    const { stopOn, stopCallback } = this.options;
+
+    if (stopOn) {
+      this.emitter.on(stopOn, (...rest: any[]) => {
+        this.timer.stop();
+
+        stopCallback.apply(this.options.context, rest);
       });
     }
   }
