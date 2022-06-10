@@ -47,7 +47,7 @@
     "nyc": "^15.0.1",
     "prettier": "^2.0.5",
     "rimraf": "^3.0.0",
-    "semantic-release": "^17.1.1",
+    "semantic-release": "^19.0.3",
     "semantic-release-cli": "^5.2.1",
     "source-map-support": "^0.5.11",
     "travis-deploy-once": "^5.0.11",
