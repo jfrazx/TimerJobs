@@ -28,7 +28,7 @@
     "test": "test"
   },
   "dependencies": {
-    "eventemitter2": "^6.3.1"
+    "eventemitter2": "^6.4.9"
   },
   "devDependencies": {
     "@sinonjs/fake-timers": "^6.0.1",
